@@ -143,3 +143,70 @@ class Producto:
                 print("No se encontró el producto.")
             else:
                 print("Producto eliminado con éxito.")
+
+class Empleado:
+    def __init__(self, nombre, puesto, salario):
+        self.nombre = nombre
+        self.puesto = puesto
+        self.salario = salario
+
+    @staticmethod
+    def _conn():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS empleados (
+                id_empleado INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                puesto TEXT,
+                salario REAL
+            );
+        """)
+        conn.commit()
+        return conn
+
+    def guardar(self):
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO empleados (nombre, puesto, salario) VALUES (?, ?, ?)",
+                (self.nombre, self.puesto, self.salario)
+            )
+        print(f"Empleado '{self.nombre}' guardado con éxito.")
+
+    @staticmethod
+    def listar():
+        with Empleado._conn() as conn:
+            cur = conn.execute("SELECT * FROM empleados")
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay empleados registrados.")
+                return
+            print("\n--- LISTADO DE EMPLEADOS ---")
+            for f in filas:
+                print(f"ID: {f['id_empleado']} | Nombre: {f['nombre']} | Puesto: {f['puesto']} | Salario: {f['salario']}")
+
+    @staticmethod
+    def modificar():
+        ide = input("Ingrese ID del empleado a modificar: ")
+        with Empleado._conn() as conn:
+            cur = conn.execute("SELECT * FROM empleados WHERE id_empleado = ?", (ide,))
+            fila = cur.fetchone()
+            if not fila:
+                print("No se encontró el empleado.")
+                return
+            nombre = input(f"Nuevo nombre [{fila['nombre']}]: ") or fila['nombre']
+            puesto = input(f"Nuevo puesto [{fila['puesto']}]: ") or fila['puesto']
+            salario = input(f"Nuevo salario [{fila['salario']}]: ") or fila['salario']
+            conn.execute("UPDATE empleados SET nombre=?, puesto=?, salario=? WHERE id_empleado=?",
+                         (nombre, puesto, salario, ide))
+        print("Empleado actualizado con éxito.")
+
+    @staticmethod
+    def eliminar():
+        ide = input("Ingrese ID del empleado a eliminar: ")
+        with Empleado._conn() as conn:
+            cur = conn.execute("DELETE FROM empleados WHERE id_empleado = ?", (ide,))
+            if cur.rowcount == 0:
+                print("No se encontró el empleado.")
+            else:
+                print("Empleado eliminado con éxito.")
