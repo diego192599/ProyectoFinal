@@ -362,4 +362,92 @@ class DetalleCompra:
                 "INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
                 (self.id_compra, self.id_producto, self.cantidad, self.precio_unitario, self.subtotal)
             )
-        print(f"Detalle agregado a compra #{self.id_compra}. Subtotal: Q{self.subtotal}"
+        print(f"Detalle agregado a compra #{self.id_compra}. Subtotal: Q{self.subtotal}")
+
+class Venta:
+    def __init__(self, id_empleado, fecha, total):
+        self.id_empleado = id_empleado
+        self.fecha = fecha
+        self.total = total
+
+    @staticmethod
+    def _conn():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ventas (
+                id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_empleado INTEGER NOT NULL,
+                fecha TEXT NOT NULL,
+                total REAL NOT NULL
+            );
+        """)
+        conn.commit()
+        return conn
+
+    def guardar(self):
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO ventas (id_empleado, fecha, total) VALUES (?, ?, ?)",
+                (self.id_empleado, self.fecha, self.total)
+            )
+        print(f"Venta registrada con éxito (Empleado ID: {self.id_empleado}).")
+
+    @staticmethod
+    def listar():
+        with Venta._conn() as conn:
+            cur = conn.execute("SELECT * FROM ventas")
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay ventas registradas.")
+                return
+            print("\n--- LISTADO DE VENTAS ---")
+            for f in filas:
+                print(f"ID: {f['id_venta']} | Empleado: {f['id_empleado']} | Fecha: {f['fecha']} | Total: {f['total']}")
+
+    @staticmethod
+    def eliminar():
+        ide = input("Ingrese ID de la venta a eliminar: ")
+        with Venta._conn() as conn:
+            cur = conn.execute("DELETE FROM ventas WHERE id_venta = ?", (ide,))
+            if cur.rowcount == 0:
+                print("No se encontró la venta.")
+            else:
+                print("Venta eliminada con éxito.")
+
+
+class DetalleVenta:
+    def __init__(self, id_venta, id_producto, cantidad, precio_unitario):
+        self.id_venta = id_venta
+        self.id_producto = id_producto
+        self.cantidad = cantidad
+        self.precio_unitario = precio_unitario
+        self.subtotal = cantidad * precio_unitario
+
+    @staticmethod
+    def _conn():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS detalle_venta (
+                id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_venta INTEGER NOT NULL,
+                id_producto INTEGER NOT NULL,
+                cantidad INTEGER NOT NULL,
+                precio_unitario REAL NOT NULL,
+                subtotal REAL NOT NULL
+            );
+        """)
+        conn.commit()
+        return conn
+
+    def guardar(self):
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+                (self.id_venta, self.id_producto, self.cantidad, self.precio_unitario, self.subtotal)
+            )
+        print(f"Detalle agregado a venta #{self.id_venta}. Subtotal: Q{self.subtotal}")
+
+
+
