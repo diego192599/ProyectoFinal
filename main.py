@@ -210,3 +210,71 @@ class Empleado:
                 print("No se encontró el empleado.")
             else:
                 print("Empleado eliminado con éxito.")
+
+
+class Usuario:
+    def __init__(self, nombre, usuario, contraseña):
+        self.nombre = nombre
+        self.usuario = usuario
+        self.contraseña = contraseña
+
+    @staticmethod
+    def _conn():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                usuario TEXT NOT NULL UNIQUE,
+                contraseña TEXT NOT NULL
+            );
+        """)
+        conn.commit()
+        return conn
+
+    def guardar(self):
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO usuarios (nombre, usuario, contraseña) VALUES (?, ?, ?)",
+                (self.nombre, self.usuario, self.contraseña)
+            )
+        print(f"Usuario '{self.usuario}' registrado con éxito.")
+
+    @staticmethod
+    def listar():
+        with Usuario._conn() as conn:
+            cur = conn.execute("SELECT * FROM usuarios")
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay usuarios registrados.")
+                return
+            print("\n--- LISTADO DE USUARIOS ---")
+            for f in filas:
+                print(f"ID: {f['id_usuario']} | Nombre: {f['nombre']} | Usuario: {f['usuario']}")
+
+    @staticmethod
+    def modificar():
+        ide = input("Ingrese ID del usuario a modificar: ")
+        with Usuario._conn() as conn:
+            cur = conn.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (ide,))
+            fila = cur.fetchone()
+            if not fila:
+                print("No se encontró el usuario.")
+                return
+            nombre = input(f"Nuevo nombre [{fila['nombre']}]: ") or fila['nombre']
+            usuario = input(f"Nuevo usuario [{fila['usuario']}]: ") or fila['usuario']
+            contraseña = input(f"Nueva contraseña [{fila['contraseña']}]: ") or fila['contraseña']
+            conn.execute("UPDATE usuarios SET nombre=?, usuario=?, contraseña=? WHERE id_usuario=?",
+                         (nombre, usuario, contraseña, ide))
+        print("Usuario actualizado con éxito.")
+
+    @staticmethod
+    def eliminar():
+        ide = input("Ingrese ID del usuario a eliminar: ")
+        with Usuario._conn() as conn:
+            cur = conn.execute("DELETE FROM usuarios WHERE id_usuario = ?", (ide,))
+            if cur.rowcount == 0:
+                print("No se encontró el usuario.")
+            else:
+                print("Usuario eliminado con éxito.")
