@@ -278,3 +278,88 @@ class Usuario:
                 print("No se encontró el usuario.")
             else:
                 print("Usuario eliminado con éxito.")
+
+class Compra:
+    def __init__(self, id_proveedor, fecha, total):
+        self.id_proveedor = id_proveedor
+        self.fecha = fecha
+        self.total = total
+
+    @staticmethod
+    def _conn():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS compras (
+                id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_proveedor INTEGER NOT NULL,
+                fecha TEXT NOT NULL,
+                total REAL NOT NULL
+            );
+        """)
+        conn.commit()
+        return conn
+
+    def guardar(self):
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO compras (id_proveedor, fecha, total) VALUES (?, ?, ?)",
+                (self.id_proveedor, self.fecha, self.total)
+            )
+        print(f"Compra registrada con éxito (Proveedor ID: {self.id_proveedor}).")
+
+    @staticmethod
+    def listar():
+        with Compra._conn() as conn:
+            cur = conn.execute("SELECT * FROM compras")
+            filas = cur.fetchall()
+            if not filas:
+                print("No hay compras registradas.")
+                return
+            print("\n--- LISTADO DE COMPRAS ---")
+            for f in filas:
+                print(f"ID: {f['id_compra']} | Proveedor: {f['id_proveedor']} | Fecha: {f['fecha']} | Total: {f['total']}")
+
+    @staticmethod
+    def eliminar():
+        ide = input("Ingrese ID de la compra a eliminar: ")
+        with Compra._conn() as conn:
+            cur = conn.execute("DELETE FROM compras WHERE id_compra = ?", (ide,))
+            if cur.rowcount == 0:
+                print("No se encontró la compra.")
+            else:
+                print("Compra eliminada con éxito.")
+
+
+class DetalleCompra:
+    def __init__(self, id_compra, id_producto, cantidad, precio_unitario):
+        self.id_compra = id_compra
+        self.id_producto = id_producto
+        self.cantidad = cantidad
+        self.precio_unitario = precio_unitario
+        self.subtotal = cantidad * precio_unitario
+
+    @staticmethod
+    def _conn():
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS detalle_compra (
+                id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_compra INTEGER NOT NULL,
+                id_producto INTEGER NOT NULL,
+                cantidad INTEGER NOT NULL,
+                precio_unitario REAL NOT NULL,
+                subtotal REAL NOT NULL
+            );
+        """)
+        conn.commit()
+        return conn
+
+    def guardar(self):
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO detalle_compra (id_compra, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+                (self.id_compra, self.id_producto, self.cantidad, self.precio_unitario, self.subtotal)
+            )
+        print(f"Detalle agregado a compra #{self.id_compra}. Subtotal: Q{self.subtotal}"
