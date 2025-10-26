@@ -57,42 +57,47 @@ class ConexionBD:
             contraseña TEXT NOT NULL
         )""")
 
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS Venta(
-            id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha TEXT,
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Venta(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_cliente INTEGER,
-            id_empleado INTEGER,
+            fecha TEXT,
             total REAL,
+            id_empleado INTEGER,
             FOREIGN KEY(id_cliente) REFERENCES Cliente(id_cliente),
             FOREIGN KEY(id_empleado) REFERENCES Empleado(id_empleado)
         )""")
 
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS DetalleVenta(
-            id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS DetalleVenta(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_venta INTEGER,
-            codigo_producto INTEGER,
+            id_producto INTEGER,
             cantidad INTEGER,
-            precio REAL,
+            precio_unitario REAL,
             subtotal REAL,
-            FOREIGN KEY(id_venta) REFERENCES Venta(id_venta),
-            FOREIGN KEY(codigo_producto) REFERENCES Producto(codigo_producto)
+            FOREIGN KEY(id_venta) REFERENCES Venta(id),
+            FOREIGN KEY(id_producto) REFERENCES Producto(codigo_producto)
         )""")
 
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS Compra(
-            id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_proveedor INTEGER NOT NULL,
-            fecha TEXT NOT NULL,
-            total REAL NOT NULL
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Compra(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_proveedor INTEGER,
+            fecha TEXT,
+            total REAL,
+            FOREIGN KEY(id_proveedor) REFERENCES Proveedor(id_proveedor)
         )""")
 
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS DetalleCompra(
-            id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS DetalleCompra(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_compra INTEGER,
             id_producto INTEGER,
             cantidad INTEGER,
             precio_unitario REAL,
             subtotal REAL,
-            FOREIGN KEY(id_compra) REFERENCES Compra(id_compra),
+            FOREIGN KEY(id_compra) REFERENCES Compra(id),
             FOREIGN KEY(id_producto) REFERENCES Producto(codigo_producto)
         )""")
 
@@ -167,7 +172,7 @@ class Usuario:
         self.usuario = usuario
         self.contrasena = contrasena
 
-class compra:
+class Compra:
     def __init__(self, id_proveedor,fecha,total):
         self.id_proveedor = id_proveedor
         self.fecha = fecha
@@ -338,3 +343,72 @@ class GestionListaUtiles:
         res = self.bd.consultar("SELECT * FROM ListaUtiles")
         for r in res:
             print(r)
+
+
+class GestionCompra:
+    def __init__(self, bd):
+        self.bd = bd
+
+    def registrar(self):
+        id_proveedor = input("ID proveedor: ")
+        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        total = float(input("Total compra: "))
+        self.bd.ejecutar("INSERT INTO Compra(id_proveedor,fecha,total) VALUES(?,?,?)",
+                         (id_proveedor, fecha, total))
+        print("Compra registrada correctamente.")
+
+    def listar(self):
+        filas = self.bd.consultar("SELECT * FROM Compra")
+        for f in filas:
+            print(f"ID:{f[0]} | Proveedor:{f[1]} | Fecha:{f[2]} | Total:{f[3]}")
+
+
+class GestionDetallesCompra:
+    def __init__(self, bd):
+        self.bd = bd
+
+    def agregar_detalle(self, id_compra, id_producto, cantidad, precio_unitario):
+        subtotal = cantidad * precio_unitario
+        self.bd.ejecutar(
+            "INSERT INTO DetalleCompra(id_compra, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+            (id_compra, id_producto, cantidad, precio_unitario, subtotal))
+        print("Detalle de compra agregado")
+
+    def mostrar(self):
+        res = self.bd.consultar("SELECT * FROM DetalleCompra")
+        for r in res:
+            print(r)
+
+
+class GestionVentas:
+    def __init__(self, bd):
+        self.bd = bd
+
+    def registrar_venta(self, id_cliente, fecha, total, id_empleado=None):
+        self.bd.ejecutar(
+            "INSERT INTO Venta(id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
+            (id_cliente, fecha, total, id_empleado))
+        print("Venta registrada")
+
+    def mostrar(self):
+        res = self.bd.consultar("SELECT * FROM Venta")
+        for r in res:
+            print(r)
+
+
+class GestionDetallesVenta:
+    def __init__(self, bd):
+        self.bd = bd
+
+    def agregar_detalle(self, id_venta, id_producto, cantidad, precio_unitario):
+        subtotal = cantidad * precio_unitario
+        self.bd.ejecutar(
+            "INSERT INTO DetalleVenta(id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+            (id_venta, id_producto, cantidad, precio_unitario, subtotal))
+        print("Detalle de venta agregado")
+
+    def mostrar(self):
+        res = self.bd.consultar("SELECT * FROM DetalleVenta")
+        for r in res:
+            print(r)
+
