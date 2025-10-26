@@ -161,6 +161,61 @@ class ListaUtiles:
         self.grado = grado
         self.id_cliente = id_cliente
 
+class Usuario:
+    def __init__(self, nombre, usuario, contrasena):
+        self.nombre = nombre
+        self.usuario = usuario
+        self.contrasena = contrasena
+
+class compra:
+    def __init__(self, id_proveedor,fecha,total):
+        self.id_proveedor = id_proveedor
+        self.fecha = fecha
+        self.total = total
+
+class DetalleCompra:
+    def __init__(self, id_compra, id_producto, cantidad, precio_unitario, subtotal):
+        self.id_compra = id_compra
+        self.id_producto = id_producto
+        self.cantidad = cantidad
+        self.precio_unitario = precio_unitario
+        self.subtotal = subtotal
+
+
+class Venta:
+    def __init__(self, id_cliente, fecha, total, id_empleado=None):
+        self.id_cliente = id_cliente
+        self.fecha = fecha
+        self.total = total
+        self.id_empleado = id_empleado
+
+class DetalleVenta:
+    def __init__(self, id_venta, id_producto, cantidad, precio_unitario, subtotal):
+        self.id_venta = id_venta
+        self.id_producto = id_producto
+        self.cantidad = cantidad
+        self.precio_unitario = precio_unitario
+        self.subtotal = subtotal
+
+
+class GestionUsuario:
+    def __init__(self, bd):
+        self.bd = bd
+
+    def agregar(self):
+        nombre = input("Nombre: ")
+        usuario = input("Usuario: ")
+        contrasena = input("Contraseña: ")
+        self.bd.ejecutar("INSERT INTO Usuario(nombre,usuario,contraseña) VALUES(?,?,?)",
+                         (nombre,usuario,contrasena))
+        print("Usuario registrado con éxito.")
+
+    def listar(self):
+        filas = self.bd.consultar("SELECT * FROM Usuario")
+        for f in filas:
+            print(f"ID:{f[0]} | Nombre:{f[1]} | Usuario:{f[2]}")
+
+
 class GestionCategorias:
     def __init__(self, bd):
         self.bd = bd
@@ -192,16 +247,11 @@ class GestionProductos:
             (id_categoria, nombre, precio, stock, limite_stock, imagen))
         print("Producto agregado correctamente.")
 
-    def listar(self):
-        filas = self.bd.consultar("SELECT * FROM Producto")
-        if not filas:
-            print("No hay productos.")
-            return
-        for f in filas:
-            print(f"ID:{f[0]} | Categoría:{f[1]} | Nombre:{f[2]} | Precio:{f[3]} | Stock:{f[4]}")
-
     def mostrar(self):
         res = self.bd.consultar("SELECT * FROM Producto")
+        if not res:
+            print("No hay productos.")
+            return
         for r in res:
             print(r)
 
@@ -230,10 +280,10 @@ class GestionEmpleados:
         nombre = input("Nombre: ")
         telefono = input("Teléfono: ")
         correo = input("Correo: ")
-        salario = float(input("Salario base: "))
+        salario = float(input("Salario: "))
         self.bd.ejecutar("INSERT INTO Empleado(nombre,telefono,correo,salario) VALUES(?,?,?,?)",
                          (nombre,telefono,correo,salario))
-        print("Empleado agregado")
+        print("Empleado agregado correctamente.")
 
     def mostrar(self):
         res = self.bd.consultar("SELECT * FROM Empleado")
@@ -265,10 +315,6 @@ class GestionProveedores:
         self.bd.ejecutar("DELETE FROM Proveedor WHERE id_proveedor=?", (ide,))
         print("Proveedor eliminado.")
 
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM Proveedor")
-        for r in res:
-            print(r)
 
 class GestionListaUtiles:
     def __init__(self, bd):
