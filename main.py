@@ -181,15 +181,24 @@ class GestionProductos:
 
     def agregar(self):
         id_categoria = input("ID categoría: ")
-        nombre = input("Nombre: ")
+        nombre = input("Nombre producto: ")
         precio = float(input("Precio: "))
-        stock = int(input("Stock inicial: "))
-        limite_stock = input("Límite stock (vacío sin límite): ")
+        stock = int(input("Stock: "))
+        limite_stock = input("Límite stock: ")
         limite_stock = int(limite_stock) if limite_stock else None
         imagen = input("Ruta imagen: ")
-        self.bd.ejecutar("INSERT INTO Producto(id_categoria,nombre,precio,stock,limite_stock,imagen) VALUES(?,?,?,?,?,?)",
-                         (id_categoria,nombre,precio,stock,limite_stock,imagen))
-        print("Producto agregado")
+        self.bd.ejecutar(
+            "INSERT INTO Producto(id_categoria,nombre,precio,stock,limite_stock,imagen) VALUES(?,?,?,?,?,?)",
+            (id_categoria, nombre, precio, stock, limite_stock, imagen))
+        print("Producto agregado correctamente.")
+
+    def listar(self):
+        filas = self.bd.consultar("SELECT * FROM Producto")
+        if not filas:
+            print("No hay productos.")
+            return
+        for f in filas:
+            print(f"ID:{f[0]} | Categoría:{f[1]} | Nombre:{f[2]} | Precio:{f[3]} | Stock:{f[4]}")
 
     def mostrar(self):
         res = self.bd.consultar("SELECT * FROM Producto")
@@ -241,7 +250,20 @@ class GestionProveedores:
         telefono = input("Teléfono: ")
         self.bd.ejecutar("INSERT INTO Proveedor(nombre,empresa,telefono) VALUES(?,?,?)",
                          (nombre,empresa,telefono))
-        print("Proveedor agregado")
+        print("Proveedor agregado con éxito.")
+
+    def listar(self):
+        filas = self.bd.consultar("SELECT * FROM Proveedor")
+        if not filas:
+            print("No hay proveedores.")
+            return
+        for f in filas:
+            print(f"ID:{f[0]} | Nombre:{f[1]} | Empresa:{f[2]} | Teléfono:{f[3]}")
+
+    def eliminar(self):
+        ide = input("ID proveedor a eliminar: ")
+        self.bd.ejecutar("DELETE FROM Proveedor WHERE id_proveedor=?", (ide,))
+        print("Proveedor eliminado.")
 
     def mostrar(self):
         res = self.bd.consultar("SELECT * FROM Proveedor")
