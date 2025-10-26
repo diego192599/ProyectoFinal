@@ -1,6 +1,8 @@
 import sqlite3
 from datetime import datetime
 
+DB_NAME = "sistema.db"
+
 class ConexionBD:
     def __init__(self, archivo):
         self.conexion = sqlite3.connect(archivo)
@@ -12,6 +14,7 @@ class ConexionBD:
             id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL
         )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Producto(
             codigo_producto INTEGER PRIMARY KEY AUTOINCREMENT,
             id_categoria INTEGER,
@@ -22,6 +25,7 @@ class ConexionBD:
             imagen TEXT,
             FOREIGN KEY(id_categoria) REFERENCES Categoria(id_categoria)
         )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Cliente(
             id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT,
@@ -30,6 +34,7 @@ class ConexionBD:
             total_compras REAL,
             descuento REAL
         )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Empleado(
             id_empleado INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT,
@@ -37,12 +42,21 @@ class ConexionBD:
             correo TEXT,
             salario REAL
         )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Proveedor(
             id_proveedor INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT,
             empresa TEXT,
             telefono TEXT
         )""")
+
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS Usuario(
+            id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            usuario TEXT NOT NULL UNIQUE,
+            contraseña TEXT NOT NULL
+        )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Venta(
             id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
             fecha TEXT,
@@ -52,6 +66,7 @@ class ConexionBD:
             FOREIGN KEY(id_cliente) REFERENCES Cliente(id_cliente),
             FOREIGN KEY(id_empleado) REFERENCES Empleado(id_empleado)
         )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS DetalleVenta(
             id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
             id_venta INTEGER,
@@ -62,12 +77,32 @@ class ConexionBD:
             FOREIGN KEY(id_venta) REFERENCES Venta(id_venta),
             FOREIGN KEY(codigo_producto) REFERENCES Producto(codigo_producto)
         )""")
+
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS Compra(
+            id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_proveedor INTEGER NOT NULL,
+            fecha TEXT NOT NULL,
+            total REAL NOT NULL
+        )""")
+
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS DetalleCompra(
+            id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_compra INTEGER,
+            id_producto INTEGER,
+            cantidad INTEGER,
+            precio_unitario REAL,
+            subtotal REAL,
+            FOREIGN KEY(id_compra) REFERENCES Compra(id_compra),
+            FOREIGN KEY(id_producto) REFERENCES Producto(codigo_producto)
+        )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS ListaUtiles(
             id_lista INTEGER PRIMARY KEY AUTOINCREMENT,
             grado TEXT,
             id_cliente INTEGER,
             FOREIGN KEY(id_cliente) REFERENCES Cliente(id_cliente)
         )""")
+
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS DetalleListaUtiles(
             id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
             id_lista INTEGER,
@@ -76,6 +111,7 @@ class ConexionBD:
             FOREIGN KEY(id_lista) REFERENCES ListaUtiles(id_lista),
             FOREIGN KEY(codigo_producto) REFERENCES Producto(codigo_producto)
         )""")
+
         self.conexion.commit()
 
     def ejecutar(self, query, params=()):
