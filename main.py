@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QMessageBox,QInputDialog, QHBoxLayout, QStackedLayout, QListWidget,
     QListWidgetItem
 )
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 
 DB_FILE = "sistema.db"
@@ -27,7 +27,7 @@ class ConexionBD:
         )""")
 
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Producto(
-            codigo_producto INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
             id_categoria INTEGER,
             nombre TEXT NOT NULL,
             precio REAL,
@@ -71,47 +71,51 @@ class ConexionBD:
 
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS Venta(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
             id_cliente INTEGER,
             fecha TEXT,
             total REAL,
             id_empleado INTEGER,
-            FOREIGN KEY(id_cliente) REFERENCES Cliente(id_cliente),
-            FOREIGN KEY(id_empleado) REFERENCES Empleado(id_empleado)
-        )""")
+            FOREIGN KEY(id_cliente) REFERENCES Usuario(id_usuario),
+            FOREIGN KEY(id_empleado) REFERENCES Usuario(id_usuario)
+        )
+        """)
 
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS DetalleVenta(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
             id_venta INTEGER,
             id_producto INTEGER,
             cantidad INTEGER,
             precio_unitario REAL,
             subtotal REAL,
-            FOREIGN KEY(id_venta) REFERENCES Venta(id),
-            FOREIGN KEY(id_producto) REFERENCES Producto(codigo_producto)
-        )""")
+            FOREIGN KEY(id_venta) REFERENCES Venta(id_venta),
+            FOREIGN KEY(id_producto) REFERENCES Productos(id_producto)
+        )
+        """)
 
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS Compra(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_proveedor INTEGER,
+            id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_padre INTEGER,
             fecha TEXT,
             total REAL,
-            FOREIGN KEY(id_proveedor) REFERENCES Proveedor(id_proveedor)
-        )""")
+            FOREIGN KEY(id_padre) REFERENCES Usuario(id_usuario)
+        )
+        """)
 
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS DetalleCompra(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
             id_compra INTEGER,
             id_producto INTEGER,
             cantidad INTEGER,
             precio_unitario REAL,
             subtotal REAL,
-            FOREIGN KEY(id_compra) REFERENCES Compra(id),
-            FOREIGN KEY(id_producto) REFERENCES Producto(codigo_producto)
-        )""")
+            FOREIGN KEY(id_compra) REFERENCES Compra(id_compra),
+            FOREIGN KEY(id_producto) REFERENCES Productos(id_producto)
+        )
+        """)
 
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS ListaUtiles(
             id_lista INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -187,34 +191,52 @@ class Usuario:
 
 
 class Compra:
-    def __init__(self, id_proveedor,fecha,total):
-        self.id_proveedor = id_proveedor
-        self.fecha = fecha
+    def __init__(self, id_compra=0, id_padre=0, fecha=None, total=0.0):
+        self.id_compra = id_compra
+        self.id_padre = id_padre
+        self.fecha = fecha if fecha else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.total = total
+        self.detalles = []  # Lista de objetos DetalleCompra
+
+    def agregar_detalle(self, detalle):
+        self.detalles.append(detalle)
+
+    def calcular_total(self):
+        self.total = sum(d.subtotal for d in self.detalles)
 
 class DetalleCompra:
-    def __init__(self, id_compra, id_producto, cantidad, precio_unitario, subtotal):
+    def __init__(self, id_detalle=0, id_compra=0, id_producto=0, cantidad=0, precio_unitario=0.0):
+        self.id_detalle = id_detalle
         self.id_compra = id_compra
         self.id_producto = id_producto
         self.cantidad = cantidad
         self.precio_unitario = precio_unitario
-        self.subtotal = subtotal
+        self.subtotal = cantidad * precio_unitario
 
 
 class Venta:
-    def __init__(self, id_cliente, fecha, total, id_empleado=None):
+    def __init__(self, id_venta=0, id_cliente=0, id_empleado=0, fecha=None, total=0.0):
+        self.id_venta = id_venta
         self.id_cliente = id_cliente
-        self.fecha = fecha
-        self.total = total
         self.id_empleado = id_empleado
+        self.fecha = fecha if fecha else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.total = total
+        self.detalles = []
+
+    def agregar_detalle(self, detalle):
+        self.detalles.append(detalle)
+
+    def calcular_total(self):
+        self.total = sum(d.subtotal for d in self.detalles)
 
 class DetalleVenta:
-    def __init__(self, id_venta, id_producto, cantidad, precio_unitario, subtotal):
+    def __init__(self, id_detalle=0, id_venta=0, id_producto=0, cantidad=0, precio_unitario=0.0):
+        self.id_detalle = id_detalle
         self.id_venta = id_venta
         self.id_producto = id_producto
         self.cantidad = cantidad
         self.precio_unitario = precio_unitario
-        self.subtotal = subtotal
+        self.subtotal = cantidad * precio_unitario
 
 
 class GestionUsuario:
@@ -576,20 +598,6 @@ class VentanaPadres(QWidget):
         self.main_layout.addLayout(self.panel_contenido)
         self.panel_contenido.addWidget(QLabel(f"Bienvenido, Padre ID {self.id_usuario}"))
 
-
-    def mostrar_catalogo(self):
-        self._limpiar_panel()
-
-        productos = ["Cuaderno", "Lápiz", "Borrador", "Colores", "Mochila", "Regla"]
-
-        self.lista_widget = QListWidget()
-        for p in productos:
-            item = QListWidgetItem(p)
-            self.lista_widget.addItem(item)
-
-        self.panel_contenido.addWidget(QLabel("Catálogo de Útiles:"))
-        self.panel_contenido.addWidget(self.lista_widget)
-
     def mostrar_listado(self):
         self._limpiar_panel()
         self.panel_contenido.addWidget(QLabel("Mi Listado de Útiles:"))
@@ -613,6 +621,48 @@ class VentanaPadres(QWidget):
                 self.lista_mis_utiles.addItem(QListWidgetItem(item))
             else:
                 QMessageBox.information(self, "Info", "El útil ya está en tu listado.")
+
+    def mostrar_catalogo(self):
+        self._limpiar_panel()
+        self.panel_contenido.addWidget(QLabel("Catálogo de Útiles:"))
+
+        self.cursor = self.bd.conexion.cursor()
+        self.cursor.execute("SELECT id_producto, nombre, stock, precio FROM Producto")
+        productos = self.cursor.fetchall()
+
+        self.lista_productos = QListWidget()
+        for p in productos:
+            self.lista_productos.addItem(f"{p[1]} - Stock: {p[2]} - Q{p[3]}")
+
+        self.panel_contenido.addWidget(self.lista_productos)
+
+        self.btn_comprar = QPushButton("Comprar útil seleccionado")
+        self.btn_comprar.clicked.connect(lambda: self.comprar_util_padre(productos))
+        self.panel_contenido.addWidget(self.btn_comprar)
+
+    def comprar_util_padre(self, productos):
+        item = self.lista_productos.currentItem()
+        if not item:
+            QMessageBox.warning(self, "Aviso", "Selecciona un producto.")
+            return
+
+        idx = self.lista_productos.currentRow()
+        id_producto, nombre, stock, precio = productos[idx]
+
+        if stock <= 0:
+            QMessageBox.warning(self, "Sin stock", f"No hay stock de {nombre}.")
+            return
+
+        cantidad = 1
+        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.cursor.execute("INSERT INTO Compra (id_padre, id_producto, cantidad, fecha) VALUES (?, ?, ?, ?)",
+                            (self.id_usuario, id_producto, cantidad, fecha))
+
+        self.cursor.execute("UPDATE Productos SET stock = stock - ? WHERE id_producto = ?", (cantidad, id_producto))
+        self.bd.conexion.commit()
+
+        QMessageBox.information(self, "Compra realizada", f"Has comprado {cantidad} {nombre}(s).")
+        self.mostrar_catalogo()
 
     def cerrar_sesion(self):
         self.close()
@@ -667,6 +717,7 @@ class VentanaAdmin(QWidget):
             ("Agregar cliente", lambda: self._cambiar_pantalla("cliente")),
             ("Agregar empleado", lambda: self._cambiar_pantalla("empleado")),
             ("Agregar proveedor", lambda: self._cambiar_pantalla("proveedor")),
+            ("Vender productos", lambda: self._cambiar_pantalla("ventas")),
             ("Cerrar sesión", self._abrir_login)
         ]
         for texto, func in botones:
@@ -893,7 +944,7 @@ class VentanaNuevaVenta(QWidget):
         self.bd = bd
         self.setWindowTitle("Registrar Venta")
         self.resize(400, 400)
-        self.productos_venta = []  # Lista de tuplas (id_producto, cantidad)
+        self.productos_venta = []
         self._construir_ui()
 
     def _construir_ui(self):
@@ -1071,6 +1122,142 @@ class VentanaNuevaCompra(QWidget):
         QMessageBox.information(self, "Éxito", f"Compra registrada con ID {id_compra}")
         self.close()
 
+class PantallaNuevaVenta(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        v = QVBoxLayout()
+        self.lista_productos = QListWidget()
+        btn_vender = QPushButton("Vender producto seleccionado")
+        btn_vender.clicked.connect(self.vender_producto)
+        v.addWidget(QLabel("Inventario de Productos"))
+        v.addWidget(self.lista_productos)
+        v.addWidget(btn_vender)
+        self.setLayout(v)
+        self.cargar_productos()
+
+    def cargar_productos(self):
+        self.lista_productos.clear()
+        cursor = self.bd.conexion.cursor()
+        cursor.execute("SELECT id_producto, nombre, stock, precio FROM Producto")
+        self.productos = cursor.fetchall()
+        for p in self.productos:
+            self.lista_productos.addItem(f"{p[1]} - Stock: {p[2]} - Q{p[3]}")
+
+    def vender_producto(self):
+        item = self.lista_productos.currentItem()
+        if not item:
+            QMessageBox.warning(self, "Aviso", "Selecciona un producto.")
+            return
+
+        idx = self.lista_productos.currentRow()
+        id_producto, nombre, stock, precio = self.productos[idx]
+
+        if stock <= 0:
+            QMessageBox.warning(self, "Sin stock", f"No hay stock de {nombre}.")
+            return
+
+        cursor = self.bd.conexion.cursor()
+        cursor.execute("UPDATE Productos SET stock = stock - 1 WHERE id_producto = ?", (id_producto,))
+        self.bd.conexion.commit()
+        QMessageBox.information(self, "Venta realizada", f"Se vendió 1 {nombre}.")
+        self.cargar_productos()
+
+class PantallaNuevaCompra(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        self.productos_compra = []
+        layout = QVBoxLayout()
+
+        self.txt_id_proveedor = QLineEdit()
+        self.txt_id_proveedor.setPlaceholderText("ID Proveedor")
+        layout.addWidget(self.txt_id_proveedor)
+
+        # Agregar productos
+        h = QHBoxLayout()
+        self.txt_id_producto = QLineEdit(); self.txt_id_producto.setPlaceholderText("ID Producto")
+        self.txt_cantidad = QLineEdit(); self.txt_cantidad.setPlaceholderText("Cantidad")
+        self.txt_precio = QLineEdit(); self.txt_precio.setPlaceholderText("Precio unitario")
+        btn_agregar = QPushButton("Agregar producto"); btn_agregar.clicked.connect(self._agregar_producto)
+        for w in [self.txt_id_producto, self.txt_cantidad, self.txt_precio, btn_agregar]: h.addWidget(w)
+        layout.addLayout(h)
+
+        # Lista de productos agregados
+        self.lbl_productos = QLabel("Productos agregados:\n")
+        layout.addWidget(self.lbl_productos)
+
+        # Botón finalizar compra
+        btn_final = QPushButton("Finalizar compra")
+        btn_final.clicked.connect(self._finalizar_compra)
+        layout.addWidget(btn_final)
+
+        self.setLayout(layout)
+
+    def _agregar_producto(self):
+        try:
+            id_prod = int(self.txt_id_producto.text().strip())
+            cantidad = int(self.txt_cantidad.text().strip())
+            precio = float(self.txt_precio.text().strip())
+            if cantidad <= 0 or precio <= 0: raise ValueError
+        except:
+            QMessageBox.warning(self, "Error", "Datos de producto inválidos")
+            return
+        self.productos_compra.append((id_prod, cantidad, precio))
+        self._actualizar_lista()
+        self.txt_id_producto.clear(); self.txt_cantidad.clear(); self.txt_precio.clear()
+
+    def _actualizar_lista(self):
+        texto = "Productos agregados:\n"
+        for idp, cant, precio in self.productos_compra:
+            texto += f"ID {idp} - Cant {cant} - Precio {precio}\n"
+        self.lbl_productos.setText(texto)
+
+    def _finalizar_compra(self):
+        if not self.productos_compra:
+            QMessageBox.warning(self, "Error", "No hay productos agregados")
+            return
+        try:
+            id_proveedor = int(self.txt_id_proveedor.text().strip())
+        except:
+            QMessageBox.warning(self, "Error", "ID Proveedor inválido")
+            return
+        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.bd.ejecutar("INSERT INTO Compra(id_proveedor, fecha) VALUES(?,?)", (id_proveedor, fecha))
+        id_compra = self.bd.cursor.lastrowid
+        for idp, cant, precio in self.productos_compra:
+            self.bd.ejecutar("INSERT INTO DetalleCompra(id_compra,id_producto,cantidad,precio) VALUES(?,?,?,?)", (id_compra, idp, cant, precio))
+            self.bd.ejecutar("UPDATE Producto SET stock = stock + ? WHERE id_producto=?", (cant, idp))
+        QMessageBox.information(self, "Éxito", f"Compra registrada con ID {id_compra}")
+        self.productos_compra.clear(); self.txt_id_proveedor.clear(); self.lbl_productos.setText("Productos agregados:\n")
+
+class PantallaCrearLista(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        layout = QVBoxLayout()
+
+        self.txt_grado = QLineEdit(); self.txt_grado.setPlaceholderText("Grado")
+        self.txt_id_cliente = QLineEdit(); self.txt_id_cliente.setPlaceholderText("ID Cliente")
+        btn_crear = QPushButton("Crear lista"); btn_crear.clicked.connect(self._crear_lista)
+
+        for w in [self.txt_grado, self.txt_id_cliente, btn_crear]:
+            layout.addWidget(w)
+        self.setLayout(layout)
+
+    def _crear_lista(self):
+        grado = self.txt_grado.text().strip()
+        id_cliente = self.txt_id_cliente.text().strip()
+        if not grado or not id_cliente:
+            QMessageBox.warning(self, "Error", "Llena todos los campos")
+            return
+        try: id_cliente = int(id_cliente)
+        except:
+            QMessageBox.warning(self, "Error", "ID Cliente inválido")
+            return
+        self.bd.ejecutar("INSERT INTO ListaUtiles(grado,id_cliente) VALUES(?,?)", (grado, id_cliente))
+        QMessageBox.information(self, "Éxito", "Lista creada correctamente")
+        self.txt_grado.clear(); self.txt_id_cliente.clear()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
