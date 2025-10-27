@@ -277,7 +277,7 @@ class VentanaTipoUsuario(QWidget):
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
-            QWidget { background-color: #f2f6fa; font-family: 'Segoe UI'; }
+            QWidget { background-color: #AEB5AF; font-family: 'Segoe UI'; }
             QPushButton {
                 background-color: #007bff;
                 color: white;
@@ -658,7 +658,7 @@ class VentanaPadres(QWidget):
         self.cursor.execute("INSERT INTO Compra (id_padre, id_producto, cantidad, fecha) VALUES (?, ?, ?, ?)",
                             (self.id_usuario, id_producto, cantidad, fecha))
 
-        self.cursor.execute("UPDATE Productos SET stock = stock - ? WHERE id_producto = ?", (cantidad, id_producto))
+        self.cursor.execute("UPDATE Producto SET stock = stock - ? WHERE id_producto = ?", (cantidad, id_producto))
         self.bd.conexion.commit()
 
         QMessageBox.information(self, "Compra realizada", f"Has comprado {cantidad} {nombre}(s).")
@@ -1266,4 +1266,3 @@ if __name__ == "__main__":
     tipo_usuario.show()
 
     sys.exit(app.exec())
-
