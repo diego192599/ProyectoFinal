@@ -1,13 +1,12 @@
 import sys
-import os
 import sqlite3
 from datetime import datetime
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QLineEdit,
-    QVBoxLayout, QHBoxLayout, QMessageBox, QFrame, QGridLayout
+    QVBoxLayout, QMessageBox,QInputDialog, QHBoxLayout
 )
-from PySide6.QtGui import QPixmap, QFont
-from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QPixmap, QIcon
+from PySide6.QtCore import Qt, QSize
 
 DB_FILE = "sistema.db"
 
@@ -65,7 +64,8 @@ class ConexionBD:
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
             usuario TEXT NOT NULL UNIQUE,
-            contrasena TEXT NOT NULL
+            contrasena TEXT NOT NULL,
+            tipo TEXT NOT NULL
         )""")
 
         self.cursor.execute("""
@@ -178,10 +178,12 @@ class ListaUtiles:
         self.id_cliente = id_cliente
 
 class Usuario:
-    def __init__(self, nombre, usuario, contrasena):
+    def __init__(self, nombre, usuario, contrasena,tipo):
         self.nombre = nombre
         self.usuario = usuario
         self.contrasena = contrasena
+        self.tipo = tipo
+
 
 class Compra:
     def __init__(self, id_proveedor,fecha,total):
@@ -218,13 +220,25 @@ class GestionUsuario:
     def __init__(self, bd):
         self.bd = bd
 
-    def agregar(self):
-        nombre = input("Nombre: ")
-        usuario = input("Usuario: ")
-        contrasena = input("Contraseña: ")
-        self.bd.ejecutar("INSERT INTO Usuario(nombre,usuario,contrasena) VALUES(?,?,?)",
-                         (nombre,usuario,contrasena))
-        print("Usuario registrado con éxito.")
+    def agregar(self, parent=None):  # parent es la ventana que lo llama
+        nombre, ok1 = QInputDialog.getText(parent, "Registrar usuario", "Nombre:")
+        if not ok1 or not nombre.strip():
+            return
+
+        usuario, ok2 = QInputDialog.getText(parent, "Registrar usuario", "Usuario:")
+        if not ok2 or not usuario.strip():
+            return
+
+        contrasena, ok3 = QInputDialog.getText(parent, "Registrar usuario", "Contraseña:", QLineEdit.EchoMode.Password)
+        if not ok3 or not contrasena.strip():
+            return
+
+        # Insertar en la BD
+        self.bd.ejecutar(
+            "INSERT INTO Usuario(nombre,usuario,contrasena,tipo) VALUES(?,?,?,?)",
+            (nombre.strip(), usuario.strip(), contrasena.strip(), "admin")  # o "padre", según contexto
+        )
+        QMessageBox.information(parent, "Éxito", "Usuario registrado con éxito.")
 
     def listar(self):
         filas = self.bd.consultar("SELECT * FROM Usuario")
@@ -423,10 +437,10 @@ class GestionDetallesVenta:
         for r in res:
             print(r)
 
-class VentanaInicio(QWidget):
+class VentanaTipoUsuario(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Bienvenido - Librería ABC")
+        self.setWindowTitle("Selecciona tipo de usuario")
         self.resize(400, 250)
         self._aplicar_estilos()
         self._construir_ui()
@@ -446,151 +460,110 @@ class VentanaInicio(QWidget):
 
     def _construir_ui(self):
         v = QVBoxLayout()
-        titulo = QLabel("Librería Escolar ABC")
-        titulo.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
+        titulo = QLabel("Bienvenido a Librería ABC")
+        titulo.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        btn_login = QPushButton("Iniciar sesión")
-        btn_login.clicked.connect(self._abrir_login)
+        btn_padres = QPushButton("Padres de familia")
+        btn_padres.clicked.connect(self._abrir_padres)
 
-        btn_registro = QPushButton("Registrarse")
-        btn_registro.clicked.connect(self._abrir_registro)
+        btn_admin = QPushButton("Administrador / Empleado")
+        btn_admin.clicked.connect(self._abrir_admin)
 
         v.addStretch()
         v.addWidget(titulo)
         v.addSpacing(20)
-        v.addWidget(btn_login)
-        v.addWidget(btn_registro)
+        v.addWidget(btn_padres)
+        v.addWidget(btn_admin)
         v.addStretch()
         self.setLayout(v)
 
-    def _abrir_login(self):
+    def _abrir_padres(self):
         self.hide()
-        self.login = VentanaLogin()
-        self.login.show()
+        self.padres = VentanaLoginPadres()
+        self.padres.show()
 
-    def _abrir_registro(self):
+    def _abrir_admin(self):
         self.hide()
-        self.registro = VentanaRegistro()
-        self.registro.show()
+        self.admin = VentanaLoginAdmin()
+        self.admin.show()
 
-
-class VentanaLogin(QWidget):
+class VentanaLoginPadres(QWidget):
     def __init__(self):
         super().__init__()
-        self.bd = ConexionBD("sistema.db")
-        self.setWindowTitle("Iniciar sesión - Librería ABC")
+        self.bd = ConexionBD(DB_FILE)
+        self.setWindowTitle("Login - Padres")
         self.resize(400, 250)
-        self._aplicar_estilos()
         self._construir_ui()
-
-    def _aplicar_estilos(self):
-        self.setStyleSheet("""
-            QWidget { background-color: #f2f6fa; font-family: 'Segoe UI'; }
-            QLabel { font-size: 15px; }
-            QLineEdit {
-                border: 1px solid #c0c0c0;
-                border-radius: 10px;
-                padding: 6px;
-                font-size: 14px;
-            }
-            QPushButton {
-                background-color: #007bff;
-                color: white;
-                border-radius: 10px;
-                padding: 8px 12px;
-                font-size: 14px;
-            }
-            QPushButton:hover { background-color: #0056b3; }
-        """)
 
     def _construir_ui(self):
         v = QVBoxLayout()
-        lbl_titulo = QLabel("Iniciar sesión")
-        lbl_titulo.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
-        lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl = QLabel("Iniciar sesión - Padres")
+        lbl.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
-
-        self.txt_clave = QLineEdit()
-        self.txt_clave.setPlaceholderText("Contraseña")
-        self.txt_clave.setEchoMode(QLineEdit.EchoMode.Password)
+        self.txt_contra = QLineEdit()
+        self.txt_contra.setPlaceholderText("Contraseña")
+        self.txt_contra.setEchoMode(QLineEdit.EchoMode.Password)
 
         btn_ingresar = QPushButton("Ingresar")
-        btn_ingresar.clicked.connect(self._on_ingresar)
+        btn_ingresar.clicked.connect(self._login)
+
+        btn_registrar = QPushButton("Registrarse")
+        btn_registrar.clicked.connect(self._abrir_registro)
 
         btn_volver = QPushButton("Volver")
         btn_volver.clicked.connect(self._volver)
 
-        v.addStretch()
-        v.addWidget(lbl_titulo)
-        v.addSpacing(10)
+        v.addWidget(lbl)
         v.addWidget(self.txt_usuario)
-        v.addWidget(self.txt_clave)
-        v.addSpacing(10)
+        v.addWidget(self.txt_contra)
         v.addWidget(btn_ingresar)
+        v.addWidget(btn_registrar)
         v.addWidget(btn_volver)
-        v.addStretch()
         self.setLayout(v)
 
-    def _on_ingresar(self):
-        user = self.txt_usuario.text().strip()
-        pwd = self.txt_clave.text().strip()
-
-        if not user or not pwd:
-            QMessageBox.warning(self, "Campos vacíos", "Por favor, completa usuario y contraseña.")
-            return
-
-        filas = self.bd.consultar("SELECT id_usuario, nombre FROM Usuario WHERE usuario=? AND contrasena=?", (user, pwd))
+    def _login(self):
+        usuario = self.txt_usuario.text().strip()
+        contra = self.txt_contra.text().strip()
+        filas = self.bd.consultar(
+            "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='padre'",
+            (usuario, contra)
+        )
         if filas:
             QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
             self.hide()
-            self.ventana = VentanaPrincipal(self.bd)
-            self.ventana.show()
+            self.padres_principal = VentanaPadres(filas[0][0])
+            self.padres_principal.show()
         else:
             QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
 
+    def _abrir_registro(self):
+        self.hide()
+        self.registro = VentanaRegistroPadres()
+        self.registro.show()
+
     def _volver(self):
         self.close()
-        self.inicio = VentanaInicio()
-        self.inicio.show()
+        self.tipo_usuario = VentanaTipoUsuario()
+        self.tipo_usuario.show()
 
 
-class VentanaRegistro(QWidget):
+class VentanaRegistroPadres(QWidget):
     def __init__(self):
         super().__init__()
-        self.bd = ConexionBD("sistema.db")
-        self.setWindowTitle("Registro de usuario - Librería ABC")
+        self.bd = ConexionBD(DB_FILE)
+        self.setWindowTitle("Registro - Padres")
         self.resize(400, 300)
-        self._aplicar_estilos()
         self._construir_ui()
-
-    def _aplicar_estilos(self):
-        self.setStyleSheet("""
-            QWidget { background-color: #f2f6fa; font-family: 'Segoe UI'; }
-            QLabel { font-size: 15px; }
-            QLineEdit {
-                border: 1px solid #c0c0c0;
-                border-radius: 10px;
-                padding: 6px;
-                font-size: 14px;
-            }
-            QPushButton {
-                background-color: #28a745;
-                color: white;
-                border-radius: 10px;
-                padding: 8px 12px;
-                font-size: 14px;
-            }
-            QPushButton:hover { background-color: #1e7e34; }
-        """)
 
     def _construir_ui(self):
         v = QVBoxLayout()
-        lbl_titulo = QLabel("Crear cuenta nueva")
-        lbl_titulo.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
-        lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl = QLabel("Crear cuenta nueva - Padres")
+        lbl.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.txt_nombre = QLineEdit()
         self.txt_nombre.setPlaceholderText("Nombre completo")
@@ -608,168 +581,236 @@ class VentanaRegistro(QWidget):
         btn_volver = QPushButton("Volver")
         btn_volver.clicked.connect(self._volver)
 
-        v.addStretch()
-        v.addWidget(lbl_titulo)
-        v.addSpacing(10)
+        v.addWidget(lbl)
         v.addWidget(self.txt_nombre)
         v.addWidget(self.txt_usuario)
         v.addWidget(self.txt_contra)
-        v.addSpacing(10)
         v.addWidget(btn_registrar)
         v.addWidget(btn_volver)
-        v.addStretch()
         self.setLayout(v)
 
     def _registrar(self):
         nombre = self.txt_nombre.text().strip()
         usuario = self.txt_usuario.text().strip()
-        contrasena = self.txt_contra.text().strip()
-
-        if not nombre or not usuario or not contrasena:
-            QMessageBox.warning(self, "Campos vacíos", "Por favor, llena todos los campos.")
+        contra = self.txt_contra.text().strip()
+        if not nombre or not usuario or not contra:
+            QMessageBox.warning(self, "Campos vacíos", "Llena todos los campos.")
             return
-
         existente = self.bd.consultar("SELECT * FROM Usuario WHERE usuario=?", (usuario,))
         if existente:
             QMessageBox.critical(self, "Error", "El usuario ya existe.")
             return
-
-        self.bd.ejecutar("INSERT INTO Usuario(nombre,usuario,contrasena) VALUES(?,?,?)", (nombre, usuario, contrasena))
-        QMessageBox.information(self, "Registro exitoso", "Usuario creado correctamente.")
+        self.bd.ejecutar(
+            "INSERT INTO Usuario(nombre, usuario, contrasena, tipo) VALUES (?, ?, ?, 'padre')",
+            (nombre, usuario, contra)
+        )
+        QMessageBox.information(self, "Éxito", "Cuenta creada correctamente.")
         self._volver()
 
     def _volver(self):
         self.close()
-        self.inicio = VentanaInicio()
-        self.inicio.show()
+        self.login = VentanaLoginPadres()
+        self.login.show()
 
-class VentanaPrincipal(QWidget):
-    def __init__(self, conexion_bd: ConexionBD):
+class VentanaLoginAdmin(QWidget):
+    def __init__(self):
         super().__init__()
-        self.bd = conexion_bd
-        self.setWindowTitle("Librería Escolar ABC")
-        self.resize(850, 600)
+        self.bd = ConexionBD(DB_FILE)
+        self.setWindowTitle("Login - Admin/Empleado")
+        self.resize(400, 250)
+        self._construir_ui()
+
+    def _construir_ui(self):
+        v = QVBoxLayout()
+        lbl = QLabel("Iniciar sesión - Admin/Empleado")
+        lbl.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.txt_usuario = QLineEdit()
+        self.txt_usuario.setPlaceholderText("Usuario")
+        self.txt_contra = QLineEdit()
+        self.txt_contra.setPlaceholderText("Contraseña")
+        self.txt_contra.setEchoMode(QLineEdit.EchoMode.Password)
+
+        btn_ingresar = QPushButton("Ingresar")
+        btn_ingresar.clicked.connect(self._login)
+
+        btn_volver = QPushButton("Volver")
+        btn_volver.clicked.connect(self._volver)
+
+        v.addWidget(lbl)
+        v.addWidget(self.txt_usuario)
+        v.addWidget(self.txt_contra)
+        v.addWidget(btn_ingresar)
+        v.addWidget(btn_volver)
+        self.setLayout(v)
+
+    def _login(self):
+        usuario = self.txt_usuario.text().strip()
+        contra = self.txt_contra.text().strip()
+        filas = self.bd.consultar(
+            "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='admin'",
+            (usuario, contra)
+        )
+        if filas:
+            QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
+            self.hide()
+            self.admin_principal = VentanaAdmin()
+            self.admin_principal.show()
+        else:
+            QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+
+    def _volver(self):
+        self.close()
+        self.tipo_usuario = VentanaTipoUsuario()
+        self.tipo_usuario.show()
+
+class VentanaPadres(QWidget):
+    def __init__(self,id_usuario):
+        super().__init__()
+        self.id_usuario = id_usuario
+        self.setWindowTitle("Padres de familia - Librería ABC")
+        self.resize(600, 400)
         self._aplicar_estilos()
         self._construir_ui()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
-            QWidget { background-color: #f8fbff; font-family: 'Segoe UI'; }
-            QLabel#titulo { font-size: 28px; font-weight: bold; color: #222; }
-            QLabel#subtitulo { font-size: 20px; color: #1e7e34; font-weight: bold; }
-            QPushButton {
-                background-color: #007bff; color: white; padding: 8px 15px; border-radius: 10px;
+            QWidget { background-color: #f0f2f5; font-family: 'Segoe UI'; }
+            QLabel#titulo {
+                font-size: 24px;
+                font-weight: bold;
+                color: #333;
             }
-            QPushButton:hover { background-color: #0056b3; }
-            QFrame#tarjeta {
-                background-color: white; border-radius: 15px; padding: 20px; border: 1px solid #d0e0f0;
+            QPushButton {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                                  stop:0 #6cace4, stop:1 #1c3f95);
+                color: white;
+                border-radius: 12px;
+                padding: 12px 20px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                                  stop:0 #1c3f95, stop:1 #6cace4);
             }
         """)
 
     def _construir_ui(self):
-        contenedor = QVBoxLayout()
+        v = QVBoxLayout()
+        v.setSpacing(20)
 
-        header = QHBoxLayout()
-        logo_lbl = QLabel()
-        self._cargar_logo_si_existe(logo_lbl, "logo.png", 60, 60)
-        titulo = QLabel("Librería ABC")
-        titulo.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        logo = QLabel()
+        pixmap = QPixmap("logo.png")
+        logo.setPixmap(pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(logo)
 
-        menu_botones = QHBoxLayout()
-        for texto in ["Inicio", "Catálogo", "Cerrar sesión", "Carrito"]:
-            btn = QPushButton(texto)
-            btn.setFixedHeight(30)
-            if texto == "Cerrar sesión":
-                btn.clicked.connect(self._cerrar_sesion)
-            menu_botones.addWidget(btn)
+        titulo = QLabel("Bienvenido, padre de familia")
+        titulo.setObjectName("titulo")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(titulo)
 
-        header.addWidget(logo_lbl)
-        header.addWidget(titulo)
-        header.addStretch()
-        header.addLayout(menu_botones)
+        btn_catalogo = QPushButton(" Ver catálogo")
+        btn_catalogo.setIcon(QIcon("icons/catalogo.png"))  # Icono opcional
+        btn_catalogo.setIconSize(QSize(32,32))
+        btn_catalogo.clicked.connect(lambda: print("Mostrar catálogo"))
 
-        contenedor.addLayout(header)
-        contenedor.addSpacing(10)
+        btn_listado = QPushButton(" Crear mi listado de útiles")
+        btn_listado.setIcon(QIcon("icons/listado.png"))
+        btn_listado.setIconSize(QSize(32,32))
+        btn_listado.clicked.connect(lambda: print("Crear listado"))
 
-        cuerpo = QVBoxLayout()
-        lbl_principal = QLabel("Librería Escolar ABC")
-        lbl_principal.setObjectName("titulo")
-        lbl_principal.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cuerpo.addWidget(lbl_principal)
-        cuerpo.addSpacing(10)
+        btn_cerrar = QPushButton(" Cerrar sesión")
+        btn_cerrar.setIcon(QIcon("icons/salir.png"))
+        btn_cerrar.setIconSize(QSize(32,32))
+        btn_cerrar.clicked.connect(self.close)
 
-        grid = QGridLayout()
+        v.addWidget(btn_catalogo)
+        v.addWidget(btn_listado)
+        v.addWidget(btn_cerrar)
+        v.addStretch()
 
-        tarjeta1 = QFrame()
-        tarjeta1.setObjectName("tarjeta")
-        v1 = QVBoxLayout()
-        s1 = QLabel("Útiles escolares")
-        s1.setObjectName("subtitulo")
-        txt1 = QLabel("Diferentes tipos de útiles escolares en oferta.")
-        btn1 = QPushButton("Descubre más aquí")
-        img1 = QLabel()
-        self._cargar_logo_si_existe(img1, "utiles.png", 160, 120)
-        img1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        v1.addWidget(s1)
-        v1.addWidget(txt1)
-        v1.addWidget(img1)
-        v1.addWidget(btn1, alignment=Qt.AlignmentFlag.AlignCenter)
-        tarjeta1.setLayout(v1)
+        self.setLayout(v)
 
-        tarjeta2 = QFrame()
-        tarjeta2.setObjectName("tarjeta")
-        v2 = QVBoxLayout()
-        s2 = QLabel("Promociones en listados de útiles")
-        s2.setObjectName("subtitulo")
-        txt2 = QLabel("Promoción al comprar varios listados de útiles.")
-        btn2 = QPushButton("Descubre más aquí")
-        img2 = QLabel()
-        self._cargar_logo_si_existe(img2, "promo.png", 160, 120)
-        img2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        v2.addWidget(s2)
-        v2.addWidget(txt2)
-        v2.addWidget(img2)
-        v2.addWidget(btn2, alignment=Qt.AlignmentFlag.AlignCenter)
-        tarjeta2.setLayout(v2)
+class VentanaAdmin(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Administrador - Librería ABC")
+        self.resize(800, 600)
+        self._aplicar_estilos()
+        self._construir_ui()
 
-        grid.addWidget(tarjeta1, 0, 0)
-        grid.addWidget(tarjeta2, 0, 1)
+    def _aplicar_estilos(self):
+        self.setStyleSheet("""
+            QWidget { background-color: #f0f2f5; font-family: 'Segoe UI'; }
+            QLabel#titulo {
+                font-size: 26px;
+                font-weight: bold;
+                color: #222;
+            }
+            QPushButton {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                                  stop:0 #f7941d, stop:1 #f15a24);
+                color: white;
+                border-radius: 12px;
+                padding: 14px 24px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                                  stop:0 #f15a24, stop:1 #f7941d);
+            }
+        """)
 
-        cuerpo.addLayout(grid)
-        contenedor.addLayout(cuerpo)
+    def _construir_ui(self):
+        v = QVBoxLayout()
+        v.setSpacing(25)
 
-        pie = QLabel("© Librería Escolar ABC")
-        pie.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pie.setStyleSheet("color: gray; margin-top: 15px; font-size: 12px;")
-        contenedor.addWidget(pie)
+        # Logo
+        logo = QLabel()
+        pixmap = QPixmap("logo.png")  # Coloca tu logo aquí
+        logo.setPixmap(pixmap.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(logo)
 
-        self.setLayout(contenedor)
+        # Título
+        titulo = QLabel("Panel de administración")
+        titulo.setObjectName("titulo")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(titulo)
 
-    def _cargar_logo_si_existe(self, label_widget: QLabel, ruta: str, w: int, h: int):
-        if os.path.exists(ruta):
-            pix = QPixmap(ruta)
-            pix = pix.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            label_widget.setPixmap(pix)
-        else:
-            label_widget.setText("")
+        # Botones
+        btn_productos = QPushButton(" Gestionar productos")
+        btn_productos.setIcon(QIcon("icons/producto.png"))
+        btn_productos.setIconSize(QSize(32,32))
+        btn_productos.clicked.connect(lambda: print("Gestionar productos"))
 
-    def _cerrar_sesion(self):
-        self.close()
-        self.login = VentanaLogin()
-        self.login.show()
+        btn_listas = QPushButton(" Gestionar listas de útiles")
+        btn_listas.setIcon(QIcon("icons/lista.png"))
+        btn_listas.setIconSize(QSize(32,32))
+        btn_listas.clicked.connect(lambda: print("Gestionar listas"))
 
-def asegurar_usuario_prueba():
-    bd = ConexionBD(DB_FILE)
-    filas = bd.consultar("SELECT COUNT(*) FROM Usuario")
-    if filas and filas[0][0] == 0:
-        bd.ejecutar("INSERT INTO Usuario (nombre, usuario, contrasena) VALUES (?, ?, ?)",
-                    ("Administrador", "admin", "1234"))
-    bd.cerrar()
+        btn_cerrar = QPushButton(" Cerrar sesión")
+        btn_cerrar.setIcon(QIcon("icons/salir.png"))
+        btn_cerrar.setIconSize(QSize(32,32))
+        btn_cerrar.clicked.connect(self.close)
+
+        v.addWidget(btn_productos)
+        v.addWidget(btn_listas)
+        v.addWidget(btn_cerrar)
+        v.addStretch()
+
+        self.setLayout(v)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    login = VentanaLogin()
-    login.show()
+
+    tipo_usuario = VentanaTipoUsuario()
+    tipo_usuario.show()
+
     sys.exit(app.exec())
 
