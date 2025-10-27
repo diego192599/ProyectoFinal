@@ -3,10 +3,10 @@ import sqlite3
 from datetime import datetime
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QLineEdit,
-    QVBoxLayout, QMessageBox,QInputDialog, QHBoxLayout
+    QVBoxLayout, QMessageBox,QInputDialog, QHBoxLayout, QStackedLayout
 )
-from PySide6.QtGui import QFont, QPixmap, QIcon
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtCore import Qt
 
 DB_FILE = "sistema.db"
 
@@ -233,10 +233,9 @@ class GestionUsuario:
         if not ok3 or not contrasena.strip():
             return
 
-        # Insertar en la BD
         self.bd.ejecutar(
             "INSERT INTO Usuario(nombre,usuario,contrasena,tipo) VALUES(?,?,?,?)",
-            (nombre.strip(), usuario.strip(), contrasena.strip(), "admin")  # o "padre", según contexto
+            (nombre.strip(), usuario.strip(), contrasena.strip(), "admin")
         )
         QMessageBox.information(parent, "Éxito", "Usuario registrado con éxito.")
 
@@ -244,198 +243,6 @@ class GestionUsuario:
         filas = self.bd.consultar("SELECT * FROM Usuario")
         for f in filas:
             print(f"ID:{f[0]} | Nombre:{f[1]} | Usuario:{f[2]}")
-
-
-class GestionCategorias:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar(self):
-        nombre = input("Nombre categoría: ")
-        self.bd.ejecutar("INSERT INTO Categoria(nombre) VALUES(?)", (nombre,))
-        print("Categoría agregada")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM Categoria")
-        for r in res:
-            print(r)
-
-class GestionProductos:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar(self):
-        id_categoria = input("ID categoría: ")
-        nombre = input("Nombre producto: ")
-        precio = float(input("Precio: "))
-        stock = int(input("Stock: "))
-        limite_stock = input("Límite stock: ")
-        limite_stock = int(limite_stock) if limite_stock else None
-        imagen = input("Ruta imagen: ")
-        self.bd.ejecutar(
-            "INSERT INTO Producto(id_categoria,nombre,precio,stock,limite_stock,imagen) VALUES(?,?,?,?,?,?)",
-            (id_categoria, nombre, precio, stock, limite_stock, imagen))
-        print("Producto agregado correctamente.")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM Producto")
-        if not res:
-            print("No hay productos.")
-            return
-        for r in res:
-            print(r)
-
-class GestionClientes:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar(self):
-        nombre = input("Nombre: ")
-        telefono = input("Teléfono: ")
-        correo = input("Correo: ")
-        self.bd.ejecutar("INSERT INTO Cliente(nombre,telefono,correo,total_compras,descuento) VALUES(?,?,?,?,?)",
-                         (nombre,telefono,correo,0,0))
-        print("Cliente agregado")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM Cliente")
-        for r in res:
-            print(r)
-
-class GestionEmpleados:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar(self):
-        nombre = input("Nombre: ")
-        telefono = input("Teléfono: ")
-        correo = input("Correo: ")
-        salario = float(input("Salario: "))
-        self.bd.ejecutar("INSERT INTO Empleado(nombre,telefono,correo,salario) VALUES(?,?,?,?)",
-                         (nombre,telefono,correo,salario))
-        print("Empleado agregado correctamente.")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM Empleado")
-        for r in res:
-            print(r)
-
-class GestionProveedores:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar(self):
-        nombre = input("Nombre: ")
-        empresa = input("Empresa: ")
-        telefono = input("Teléfono: ")
-        self.bd.ejecutar("INSERT INTO Proveedor(nombre,empresa,telefono) VALUES(?,?,?)",
-                         (nombre,empresa,telefono))
-        print("Proveedor agregado con éxito.")
-
-    def listar(self):
-        filas = self.bd.consultar("SELECT * FROM Proveedor")
-        if not filas:
-            print("No hay proveedores.")
-            return
-        for f in filas:
-            print(f"ID:{f[0]} | Nombre:{f[1]} | Empresa:{f[2]} | Teléfono:{f[3]}")
-
-    def eliminar(self):
-        ide = input("ID proveedor a eliminar: ")
-        self.bd.ejecutar("DELETE FROM Proveedor WHERE id_proveedor=?", (ide,))
-        print("Proveedor eliminado.")
-
-
-class GestionListaUtiles:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def crear_lista(self):
-        grado = input("Grado: ")
-        id_cliente = input("ID Cliente: ")
-        self.bd.ejecutar("INSERT INTO ListaUtiles(grado,id_cliente) VALUES(?,?)",(grado,id_cliente))
-        print("Lista creada")
-
-    def agregar_item(self):
-        id_lista = input("ID Lista útiles: ")
-        codigo = input("Código producto: ")
-        cantidad = int(input("Cantidad: "))
-        self.bd.ejecutar("INSERT INTO DetalleListaUtiles(id_lista,codigo_producto,cantidad) VALUES(?,?,?)",
-                         (id_lista,codigo,cantidad))
-        print("Item agregado")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM ListaUtiles")
-        for r in res:
-            print(r)
-
-
-class GestionCompra:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def registrar(self):
-        id_proveedor = input("ID proveedor: ")
-        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        total = float(input("Total compra: "))
-        self.bd.ejecutar("INSERT INTO Compra(id_proveedor,fecha,total) VALUES(?,?,?)",
-                         (id_proveedor, fecha, total))
-        print("Compra registrada correctamente.")
-
-    def listar(self):
-        filas = self.bd.consultar("SELECT * FROM Compra")
-        for f in filas:
-            print(f"ID:{f[0]} | Proveedor:{f[1]} | Fecha:{f[2]} | Total:{f[3]}")
-
-
-class GestionDetallesCompra:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar_detalle(self, id_compra, id_producto, cantidad, precio_unitario):
-        subtotal = cantidad * precio_unitario
-        self.bd.ejecutar(
-            "INSERT INTO DetalleCompra(id_compra, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
-            (id_compra, id_producto, cantidad, precio_unitario, subtotal))
-        print("Detalle de compra agregado")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM DetalleCompra")
-        for r in res:
-            print(r)
-
-
-class GestionVentas:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def registrar_venta(self, id_cliente, fecha, total, id_empleado=None):
-        self.bd.ejecutar(
-            "INSERT INTO Venta(id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
-            (id_cliente, fecha, total, id_empleado))
-        print("Venta registrada")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM Venta")
-        for r in res:
-            print(r)
-
-
-class GestionDetallesVenta:
-    def __init__(self, bd):
-        self.bd = bd
-
-    def agregar_detalle(self, id_venta, id_producto, cantidad, precio_unitario):
-        subtotal = cantidad * precio_unitario
-        self.bd.ejecutar(
-            "INSERT INTO DetalleVenta(id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
-            (id_venta, id_producto, cantidad, precio_unitario, subtotal))
-        print("Detalle de venta agregado")
-
-    def mostrar(self):
-        res = self.bd.consultar("SELECT * FROM DetalleVenta")
-        for r in res:
-            print(r)
 
 class VentanaTipoUsuario(QWidget):
     def __init__(self):
@@ -535,7 +342,7 @@ class VentanaLoginPadres(QWidget):
         if filas:
             QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
             self.hide()
-            self.padres_principal = VentanaPadres(filas[0][0])
+            self.padres_principal = VentanaPadres(self.bd,filas[0][0])
             self.padres_principal.show()
         else:
             QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
@@ -635,6 +442,9 @@ class VentanaLoginAdmin(QWidget):
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
 
+        btn_registrar = QPushButton("Registrarse")
+        btn_registrar.clicked.connect(self._abrir_registro)
+
         btn_volver = QPushButton("Volver")
         btn_volver.clicked.connect(self._volver)
 
@@ -642,6 +452,7 @@ class VentanaLoginAdmin(QWidget):
         v.addWidget(self.txt_usuario)
         v.addWidget(self.txt_contra)
         v.addWidget(btn_ingresar)
+        v.addWidget(btn_registrar)
         v.addWidget(btn_volver)
         self.setLayout(v)
 
@@ -655,19 +466,87 @@ class VentanaLoginAdmin(QWidget):
         if filas:
             QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
             self.hide()
-            self.admin_principal = VentanaAdmin()
+            self.admin_principal = VentanaAdmin(self.bd)
             self.admin_principal.show()
         else:
             QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+
+    def _abrir_registro(self):
+        self.hide()
+        self.registro_admin = VentanaRegistroAdmin()
+        self.registro_admin.show()
 
     def _volver(self):
         self.close()
         self.tipo_usuario = VentanaTipoUsuario()
         self.tipo_usuario.show()
 
-class VentanaPadres(QWidget):
-    def __init__(self,id_usuario):
+
+class VentanaRegistroAdmin(QWidget):
+    def __init__(self):
         super().__init__()
+        self.bd = ConexionBD(DB_FILE)
+        self.setWindowTitle("Registro - Admin/Empleado")
+        self.resize(400, 300)
+        self._construir_ui()
+
+    def _construir_ui(self):
+        v = QVBoxLayout()
+        lbl = QLabel("Crear cuenta nueva - Admin/Empleado")
+        lbl.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.txt_nombre = QLineEdit()
+        self.txt_nombre.setPlaceholderText("Nombre completo")
+
+        self.txt_usuario = QLineEdit()
+        self.txt_usuario.setPlaceholderText("Usuario")
+
+        self.txt_contra = QLineEdit()
+        self.txt_contra.setPlaceholderText("Contraseña")
+        self.txt_contra.setEchoMode(QLineEdit.EchoMode.Password)
+
+        btn_registrar = QPushButton("Registrar")
+        btn_registrar.clicked.connect(self._registrar)
+
+        btn_volver = QPushButton("Volver")
+        btn_volver.clicked.connect(self._volver)
+
+        v.addWidget(lbl)
+        v.addWidget(self.txt_nombre)
+        v.addWidget(self.txt_usuario)
+        v.addWidget(self.txt_contra)
+        v.addWidget(btn_registrar)
+        v.addWidget(btn_volver)
+        self.setLayout(v)
+
+    def _registrar(self):
+        nombre = self.txt_nombre.text().strip()
+        usuario = self.txt_usuario.text().strip()
+        contra = self.txt_contra.text().strip()
+        if not nombre or not usuario or not contra:
+            QMessageBox.warning(self, "Campos vacíos", "Llena todos los campos.")
+            return
+        existente = self.bd.consultar("SELECT * FROM Usuario WHERE usuario=?", (usuario,))
+        if existente:
+            QMessageBox.critical(self, "Error", "El usuario ya existe.")
+            return
+        self.bd.ejecutar(
+            "INSERT INTO Usuario(nombre, usuario, contrasena, tipo) VALUES (?, ?, ?, 'admin')",
+            (nombre, usuario, contra)
+        )
+        QMessageBox.information(self, "Éxito", "Cuenta creada correctamente.")
+        self._volver()
+
+    def _volver(self):
+        self.close()
+        self.login = VentanaLoginAdmin()
+        self.login.show()
+
+class VentanaPadres(QWidget):
+    def __init__(self, bd, id_usuario):
+        super().__init__()
+        self.bd = bd
         self.id_usuario = id_usuario
         self.setWindowTitle("Padres de familia - Librería ABC")
         self.resize(600, 400)
@@ -701,6 +580,7 @@ class VentanaPadres(QWidget):
         v = QVBoxLayout()
         v.setSpacing(20)
 
+        # Logo
         logo = QLabel()
         pixmap = QPixmap("logo.png")
         logo.setPixmap(pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
@@ -712,98 +592,251 @@ class VentanaPadres(QWidget):
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         v.addWidget(titulo)
 
+        # Botones
         btn_catalogo = QPushButton(" Ver catálogo")
-        btn_catalogo.setIcon(QIcon("icons/catalogo.png"))  # Icono opcional
-        btn_catalogo.setIconSize(QSize(32,32))
         btn_catalogo.clicked.connect(lambda: print("Mostrar catálogo"))
 
         btn_listado = QPushButton(" Crear mi listado de útiles")
-        btn_listado.setIcon(QIcon("icons/listado.png"))
-        btn_listado.setIconSize(QSize(32,32))
-        btn_listado.clicked.connect(lambda: print("Crear listado"))
+        btn_listado.clicked.connect(lambda: self._abrir_listado_utiles())
 
         btn_cerrar = QPushButton(" Cerrar sesión")
-        btn_cerrar.setIcon(QIcon("icons/salir.png"))
-        btn_cerrar.setIconSize(QSize(32,32))
         btn_cerrar.clicked.connect(self.close)
 
-        v.addWidget(btn_catalogo)
-        v.addWidget(btn_listado)
-        v.addWidget(btn_cerrar)
-        v.addStretch()
+        for b in [btn_catalogo, btn_listado, btn_cerrar]:
+            v.addWidget(b)
 
+        v.addStretch()
         self.setLayout(v)
+
+    def _abrir_listado_utiles(self):
+        self.ventana_listado = VentanaCrearLista(self.bd)
+        self.ventana_listado.show()
 
 class VentanaAdmin(QWidget):
-    def __init__(self):
+    def __init__(self, bd, mostrar_login=None):
         super().__init__()
+        self.bd = bd
+        self.mostrar_login = mostrar_login  # Función para mostrar login
         self.setWindowTitle("Administrador - Librería ABC")
-        self.resize(800, 600)
-        self._aplicar_estilos()
+        self.resize(1000, 600)
         self._construir_ui()
 
-    def _aplicar_estilos(self):
-        self.setStyleSheet("""
-            QWidget { background-color: #f0f2f5; font-family: 'Segoe UI'; }
-            QLabel#titulo {
-                font-size: 26px;
-                font-weight: bold;
-                color: #222;
-            }
-            QPushButton {
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                                  stop:0 #f7941d, stop:1 #f15a24);
-                color: white;
-                border-radius: 12px;
-                padding: 14px 24px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                                  stop:0 #f15a24, stop:1 #f7941d);
-            }
-        """)
-
     def _construir_ui(self):
-        v = QVBoxLayout()
-        v.setSpacing(25)
-
-        # Logo
-        logo = QLabel()
-        pixmap = QPixmap("logo.png")  # Coloca tu logo aquí
-        logo.setPixmap(pixmap.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        v.addWidget(logo)
-
-        # Título
+        main_layout = QVBoxLayout(self)
         titulo = QLabel("Panel de administración")
-        titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        v.addWidget(titulo)
+        titulo.setStyleSheet("font-size: 26px; font-weight: bold;")
+        main_layout.addWidget(titulo)
 
-        # Botones
-        btn_productos = QPushButton(" Gestionar productos")
-        btn_productos.setIcon(QIcon("icons/producto.png"))
-        btn_productos.setIconSize(QSize(32,32))
-        btn_productos.clicked.connect(lambda: print("Gestionar productos"))
+        h_layout = QHBoxLayout()
+        main_layout.addLayout(h_layout)
 
-        btn_listas = QPushButton(" Gestionar listas de útiles")
-        btn_listas.setIcon(QIcon("icons/lista.png"))
-        btn_listas.setIconSize(QSize(32,32))
-        btn_listas.clicked.connect(lambda: print("Gestionar listas"))
+        v_botones = QVBoxLayout()
+        h_layout.addLayout(v_botones, 1)
 
-        btn_cerrar = QPushButton(" Cerrar sesión")
-        btn_cerrar.setIcon(QIcon("icons/salir.png"))
-        btn_cerrar.setIconSize(QSize(32,32))
-        btn_cerrar.clicked.connect(self.close)
+        self.stacked_layout = QStackedLayout()
+        h_layout.addLayout(self.stacked_layout, 3)
 
-        v.addWidget(btn_productos)
-        v.addWidget(btn_listas)
-        v.addWidget(btn_cerrar)
-        v.addStretch()
+        self.pantallas = {
+            "categoria": PantallaAgregarCategoria(self.bd),
+            "producto": PantallaAgregarProducto(self.bd),
+            "cliente": PantallaAgregarCliente(self.bd),
+            "empleado": PantallaAgregarEmpleado(self.bd),
+            "proveedor": PantallaAgregarProveedor(self.bd),
+            "ventas": PantallaNuevaVenta(self.bd),
+            "Compra": PantallaNuevaCompra(self.bd),
+            "listas": PantallaCrearLista(self.bd)
+        }
+        for w in self.pantallas.values():
+            self.stacked_layout.addWidget(w)
 
+        botones = [
+            ("Agregar categoría", lambda: self._cambiar_pantalla("categoria")),
+            ("Agregar producto", lambda: self._cambiar_pantalla("producto")),
+            ("Agregar cliente", lambda: self._cambiar_pantalla("cliente")),
+            ("Agregar empleado", lambda: self._cambiar_pantalla("empleado")),
+            ("Agregar proveedor", lambda: self._cambiar_pantalla("proveedor")),
+            ("Cerrar sesión", self._abrir_login)
+        ]
+        for texto, func in botones:
+            btn = QPushButton(texto)
+            btn.setFixedHeight(40)
+            btn.clicked.connect(func)
+            v_botones.addWidget(btn)
+        v_botones.addStretch()
+
+        lbl_inicio = QLabel("Selecciona una opción del menú lateral")
+        lbl_inicio.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.stacked_layout.addWidget(lbl_inicio)
+        self.stacked_layout.setCurrentWidget(lbl_inicio)
+
+    def _cambiar_pantalla(self, key):
+        widget = self.pantallas.get(key)
+        if widget:
+            self.stacked_layout.setCurrentWidget(widget)
+
+    def _abrir_login(self):
+        self.hide()
+        self.mostrar_login = VentanaTipoUsuario()
+        self.mostrar_login.show()
+
+class PantallaAgregarCategoria(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        v = QVBoxLayout()
+        self.txt_nombre = QLineEdit()
+        self.txt_nombre.setPlaceholderText("Nombre de la categoría")
+        btn_agregar = QPushButton("Agregar")
+        btn_agregar.clicked.connect(self._agregar_categoria)
+        v.addWidget(self.txt_nombre)
+        v.addWidget(btn_agregar)
         self.setLayout(v)
+
+    def _agregar_categoria(self):
+        nombre = self.txt_nombre.text().strip()
+        if not nombre:
+            QMessageBox.warning(self, "Error", "Ingresa un nombre de categoría")
+            return
+        self.bd.ejecutar("INSERT INTO Categoria(nombre) VALUES(?)", (nombre,))
+        QMessageBox.information(self, "Éxito", "Categoría agregada correctamente")
+        self.txt_nombre.clear()
+
+class PantallaAgregarProducto(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        v = QVBoxLayout()
+        self.txt_id_categoria = QLineEdit()
+        self.txt_id_categoria.setPlaceholderText("ID categoría")
+        self.txt_nombre = QLineEdit()
+        self.txt_nombre.setPlaceholderText("Nombre producto")
+        self.txt_precio = QLineEdit()
+        self.txt_precio.setPlaceholderText("Precio")
+        self.txt_stock = QLineEdit()
+        self.txt_stock.setPlaceholderText("Stock")
+        self.txt_limite = QLineEdit()
+        self.txt_limite.setPlaceholderText("Límite stock (opcional)")
+        self.txt_imagen = QLineEdit()
+        self.txt_imagen.setPlaceholderText("Ruta imagen (opcional)")
+        btn_agregar = QPushButton("Agregar producto")
+        btn_agregar.clicked.connect(self._agregar_producto)
+        for w in [self.txt_id_categoria, self.txt_nombre, self.txt_precio,
+                  self.txt_stock, self.txt_limite, self.txt_imagen, btn_agregar]:
+            v.addWidget(w)
+        self.setLayout(v)
+
+    def _agregar_producto(self):
+        try:
+            id_categoria = int(self.txt_id_categoria.text().strip())
+            nombre = self.txt_nombre.text().strip()
+            precio = float(self.txt_precio.text().strip())
+            stock = int(self.txt_stock.text().strip())
+            limite_stock = self.txt_limite.text().strip()
+            limite_stock = int(limite_stock) if limite_stock else None
+            imagen = self.txt_imagen.text().strip()
+            if not nombre:
+                raise ValueError("Nombre vacío")
+        except ValueError as e:
+            QMessageBox.warning(self, "Error", f"Datos inválidos: {e}")
+            return
+        self.bd.ejecutar(
+            "INSERT INTO Producto(id_categoria,nombre,precio,stock,limite_stock,imagen) VALUES(?,?,?,?,?,?)",
+            (id_categoria, nombre, precio, stock, limite_stock, imagen)
+        )
+        QMessageBox.information(self, "Éxito", "Producto agregado correctamente")
+        self.txt_id_categoria.clear()
+        self.txt_nombre.clear()
+        self.txt_precio.clear()
+        self.txt_stock.clear()
+        self.txt_limite.clear()
+        self.txt_imagen.clear()
+
+class PantallaAgregarCliente(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        v = QVBoxLayout()
+        self.txt_nombre = QLineEdit(); self.txt_nombre.setPlaceholderText("Nombre")
+        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono")
+        self.txt_correo = QLineEdit(); self.txt_correo.setPlaceholderText("Correo")
+        btn_agregar = QPushButton("Agregar cliente"); btn_agregar.clicked.connect(self._agregar_cliente)
+        for w in [self.txt_nombre, self.txt_telefono, self.txt_correo, btn_agregar]:
+            v.addWidget(w)
+        self.setLayout(v)
+
+    def _agregar_cliente(self):
+        nombre = self.txt_nombre.text().strip()
+        telefono = self.txt_telefono.text().strip()
+        correo = self.txt_correo.text().strip()
+        if not nombre or not telefono or not correo:
+            QMessageBox.warning(self, "Error", "Llena todos los campos")
+            return
+        self.bd.ejecutar(
+            "INSERT INTO Cliente(nombre,telefono,correo,total_compras,descuento) VALUES(?,?,?,?,?)",
+            (nombre, telefono, correo, 0, 0)
+        )
+        QMessageBox.information(self, "Éxito", "Cliente agregado correctamente")
+        self.txt_nombre.clear(); self.txt_telefono.clear(); self.txt_correo.clear()
+
+class PantallaAgregarEmpleado(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        v = QVBoxLayout()
+        self.txt_nombre = QLineEdit(); self.txt_nombre.setPlaceholderText("Nombre")
+        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono")
+        self.txt_correo = QLineEdit(); self.txt_correo.setPlaceholderText("Correo")
+        self.txt_salario = QLineEdit(); self.txt_salario.setPlaceholderText("Salario")
+        btn_agregar = QPushButton("Agregar empleado"); btn_agregar.clicked.connect(self._agregar_empleado)
+        for w in [self.txt_nombre, self.txt_telefono, self.txt_correo, self.txt_salario, btn_agregar]:
+            v.addWidget(w)
+        self.setLayout(v)
+
+    def _agregar_empleado(self):
+        try:
+            nombre = self.txt_nombre.text().strip()
+            telefono = self.txt_telefono.text().strip()
+            correo = self.txt_correo.text().strip()
+            salario = float(self.txt_salario.text().strip())
+            if not nombre: raise ValueError("Nombre vacío")
+        except ValueError as e:
+            QMessageBox.warning(self, "Error", f"Datos inválidos: {e}")
+            return
+        self.bd.ejecutar(
+            "INSERT INTO Empleado(nombre,telefono,correo,salario) VALUES(?,?,?,?)",
+            (nombre, telefono, correo, salario)
+        )
+        QMessageBox.information(self, "Éxito", "Empleado agregado correctamente")
+        self.txt_nombre.clear(); self.txt_telefono.clear(); self.txt_correo.clear(); self.txt_salario.clear()
+
+class PantallaAgregarProveedor(QWidget):
+    def __init__(self, bd):
+        super().__init__()
+        self.bd = bd
+        v = QVBoxLayout()
+        self.txt_nombre = QLineEdit(); self.txt_nombre.setPlaceholderText("Nombre")
+        self.txt_empresa = QLineEdit(); self.txt_empresa.setPlaceholderText("Empresa")
+        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono")
+        btn_agregar = QPushButton("Agregar proveedor"); btn_agregar.clicked.connect(self._agregar_proveedor)
+        for w in [self.txt_nombre, self.txt_empresa, self.txt_telefono, btn_agregar]:
+            v.addWidget(w)
+        self.setLayout(v)
+
+    def _agregar_proveedor(self):
+        nombre = self.txt_nombre.text().strip()
+        empresa = self.txt_empresa.text().strip()
+        telefono = self.txt_telefono.text().strip()
+        if not nombre or not empresa or not telefono:
+            QMessageBox.warning(self, "Error", "Llena todos los campos")
+            return
+        self.bd.ejecutar(
+            "INSERT INTO Proveedor(nombre,empresa,telefono) VALUES(?,?,?)",
+            (nombre, empresa, telefono)
+        )
+        QMessageBox.information(self, "Éxito", "Proveedor agregado correctamente")
+        self.txt_nombre.clear(); self.txt_empresa.clear(); self.txt_telefono.clear()
+
 
 
 if __name__ == "__main__":
