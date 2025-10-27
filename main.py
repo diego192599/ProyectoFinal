@@ -1,13 +1,24 @@
+import sys
+import os
 import sqlite3
 from datetime import datetime
+from PySide6.QtWidgets import (
+    QApplication, QWidget, QLabel, QPushButton, QLineEdit,
+    QVBoxLayout, QHBoxLayout, QMessageBox, QFrame, QGridLayout
+)
+from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtCore import Qt
 
-DB_NAME = "sistema.db"
+DB_FILE = "sistema.db"
 
 class ConexionBD:
     def __init__(self, archivo):
         self.conexion = sqlite3.connect(archivo)
         self.cursor = self.conexion.cursor()
         self.crear_tablas()
+
+    def cerrar(self):
+        self.conexion.close()
 
     def crear_tablas(self):
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Categoria(
@@ -54,7 +65,7 @@ class ConexionBD:
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
             usuario TEXT NOT NULL UNIQUE,
-            contraseña TEXT NOT NULL
+            contrasena TEXT NOT NULL
         )""")
 
         self.cursor.execute("""
@@ -211,7 +222,7 @@ class GestionUsuario:
         nombre = input("Nombre: ")
         usuario = input("Usuario: ")
         contrasena = input("Contraseña: ")
-        self.bd.ejecutar("INSERT INTO Usuario(nombre,usuario,contraseña) VALUES(?,?,?)",
+        self.bd.ejecutar("INSERT INTO Usuario(nombre,usuario,contrasena) VALUES(?,?,?)",
                          (nombre,usuario,contrasena))
         print("Usuario registrado con éxito.")
 
@@ -412,3 +423,91 @@ class GestionDetallesVenta:
         for r in res:
             print(r)
 
+
+class VentanaLogin(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.bd = ConexionBD(DB_FILE)
+        self.setWindowTitle("Ingreso - Librería ABC")
+        self.resize(400, 250)
+        self._aplicar_estilos()
+        self._construir_ui()
+
+    def _aplicar_estilos(self):
+        self.setStyleSheet("""
+            QWidget { background-color: #f2f6fa; font-family: 'Segoe UI'; }
+            QLabel { font-size: 15px; }
+            QLineEdit {
+                border: 1px solid #c0c0c0;
+                border-radius: 10px;
+                padding: 6px;
+                font-size: 14px;
+            }
+            QPushButton {
+                background-color: #007bff;
+                color: white;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+            QPushButton:hover { background-color: #0056b3; }
+        """)
+
+    def _construir_ui(self):
+        v = QVBoxLayout()
+
+        lbl_titulo = QLabel("Iniciar sesión")
+        lbl_titulo.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
+        lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.txt_usuario = QLineEdit()
+        self.txt_usuario.setPlaceholderText("Usuario")
+
+        self.txt_clave = QLineEdit()
+        self.txt_clave.setPlaceholderText("Contraseña")
+        self.txt_clave.setEchoMode(QLineEdit.EchoMode.Password)
+
+        btn_ingresar = QPushButton("Ingresar")
+        btn_ingresar.clicked.connect(self._on_ingresar)
+
+        v.addStretch()
+        v.addWidget(lbl_titulo)
+        v.addSpacing(10)
+        v.addWidget(self.txt_usuario)
+        v.addWidget(self.txt_clave)
+        v.addSpacing(10)
+        v.addWidget(btn_ingresar)
+        v.addStretch()
+
+        self.setLayout(v)
+
+    def _on_ingresar(self):
+        user = self.txt_usuario.text().strip()
+        pwd = self.txt_clave.text().strip()
+
+        if not user or not pwd:
+            QMessageBox.warning(self, "Campos vacíos", "Completa usuario y contraseña.")
+            return
+
+        filas = self.bd.consultar(
+            "SELECT id_usuario, nombre FROM Usuario WHERE usuario=? AND contraseña=?",
+            (user, pwd)
+        )
+
+        if filas:
+            # login ok
+            QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
+            self._abrir_principal()
+        else:
+            QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+
+    def _abrir_principal(self):
+        self.hide()
+        self.ventana = VentanaPrincipal(self.bd)  # paso la conexión para reusar si quiero
+        self.ventana.show()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    login = VentanaLogin()
+    login.show()
+    sys.exit(app.exec())
