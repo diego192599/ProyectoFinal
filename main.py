@@ -587,7 +587,7 @@ class VentanaPadres(QWidget):
 
         self.btn_catalogo.clicked.connect(self.mostrar_catalogo)
         self.btn_listado.clicked.connect(self.mostrar_listado)
-        self.btn_cerrar.clicked.connect(self.cerrar_sesion)
+        self.btn_cerrar.clicked.connect(self._abrir_login)
 
         for btn in [self.btn_catalogo, self.btn_listado, self.btn_cerrar]:
             self.panel_botones.addWidget(btn)
@@ -664,14 +664,17 @@ class VentanaPadres(QWidget):
         QMessageBox.information(self, "Compra realizada", f"Has comprado {cantidad} {nombre}(s).")
         self.mostrar_catalogo()
 
-    def cerrar_sesion(self):
-        self.close()
 
     def _limpiar_panel(self):
         for i in reversed(range(self.panel_contenido.count())):
             widget = self.panel_contenido.itemAt(i).widget()
             if widget is not None:
                 widget.setParent(None)
+
+    def _abrir_login(self):
+        self.hide()
+        self.mostrar_login = VentanaTipoUsuario()
+        self.mostrar_login.show()
 
 class VentanaAdmin(QWidget):
     def __init__(self, bd, mostrar_login=None):
