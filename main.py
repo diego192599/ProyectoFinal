@@ -319,46 +319,6 @@ class GestionUsuario:
             print(f"ID:{f[0]} | Nombre:{f[1]} | Usuario:{f[2]}")
 
 
-class ManejadorImagenes:
-    @staticmethod
-    def imagen_a_blob(ruta_imagen):
-
-        try:
-            if not os.path.exists(ruta_imagen):
-                return None, None
-
-            extension = os.path.splitext(ruta_imagen)[1].lower().replace('.', '')
-
-            with open(ruta_imagen, 'rb') as file:
-                blob_data = file.read()
-
-            return blob_data, extension
-        except Exception as e:
-            print(f"Error al convertir imagen: {e}")
-            return None, None
-
-    @staticmethod
-    def blob_a_imagen(blob_data, tipo_imagen):
-
-        try:
-            if blob_data is None:
-                return QPixmap()
-
-            pixmap = QPixmap()
-            pixmap.loadFromData(blob_data)
-            return pixmap
-        except Exception as e:
-            print(f"Error al cargar imagen desde blob: {e}")
-            return QPixmap()
-
-    @staticmethod
-    def obtener_imagen_predeterminada():
-
-        pixmap = QPixmap(100, 100)
-        pixmap.fill(Qt.GlobalColor.lightGray)
-        return pixmap
-
-
 class VentanaTipoUsuario(QWidget):
     def __init__(self):
         super().__init__()
@@ -986,7 +946,6 @@ class VentanaPadres(QWidget):
             if item.widget():
                 item.widget().setParent(None)
             elif item.layout():
-                # Limpiar layouts anidados
                 for j in reversed(range(item.layout().count())):
                     nested_item = item.layout().itemAt(j)
                     if nested_item.widget():
