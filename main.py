@@ -1927,6 +1927,7 @@ class PantallaMostrarInventario(QWidget):
     def __init__(self, bd):
         super().__init__()
         self.bd = bd
+        self.productos_completos = []  # Inicializar como lista vacía
         self._construir_ui()
         self.cargar_inventario()
 
@@ -1994,19 +1995,43 @@ class PantallaMostrarInventario(QWidget):
         self.setLayout(layout)
 
     def cargar_categorias(self):
-        self.combo_categoria.clear()
-        self.combo_categoria.addItem("Todas las categorías", 0)
+        """Cargar las categorías en el combobox"""
+        try:
+            # Desconectar la señal temporalmente para evitar filtros durante la carga
+            try:
+                self.combo_categoria.currentIndexChanged.disconnect()
+            except:
+                pass
 
-        categorias = self.bd.consultar("SELECT id_categoria, nombre FROM Categoria ORDER BY nombre")
-        for id_cat, nombre in categorias:
-            self.combo_categoria.addItem(nombre, id_cat)
+            self.combo_categoria.clear()
+            self.combo_categoria.addItem("Todas las categorías", 0)
+
+            categorias = self.bd.consultar("SELECT id_categoria, nombre FROM Categoria ORDER BY nombre")
+            for id_cat, nombre in categorias:
+                self.combo_categoria.addItem(nombre, id_cat)
+
+            # Reconectar la señal
+            self.combo_categoria.currentIndexChanged.connect(self.filtrar_inventario)
+        except Exception as e:
+            print(f"Error al cargar categorías: {e}")
+            # Reconectar la señal incluso si hay error
+            self.combo_categoria.currentIndexChanged.connect(self.filtrar_inventario)
 
     def cargar_inventario(self):
-
+        """Cargar y mostrar el inventario de productos"""
         try:
-
+            # Cargar categorías primero
             self.cargar_categorias()
 
+            # Cargar datos sin activar filtros
+            self._cargar_datos_sin_filtro()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar el inventario:\n{str(e)}")
+
+    def _cargar_datos_sin_filtro(self):
+        """Cargar datos sin activar el filtro (para evitar recursión)"""
+        try:
             query = """
                 SELECT 
                     p.id_producto, p.nombre, c.nombre as categoria, 
@@ -2016,67 +2041,76 @@ class PantallaMostrarInventario(QWidget):
                 LEFT JOIN Categoria c ON p.id_categoria = c.id_categoria
                 ORDER BY p.nombre
             """
-
-            productos = self.bd.consultar(query)
-
-            self.tabla_inventario.setRowCount(len(productos))
-            self.productos_completos = productos  # Guardar para filtros
-
-            for row, producto in enumerate(productos):
-                id_producto, nombre, categoria, precio, stock, limite_stock, imagen, tipo_imagen = producto
-
-                # Determinar estado del stock
-                if stock == 0:
-                    estado = "SIN STOCK"
-                    color_estado = "#e74c3c"
-                elif stock <= (limite_stock or 5):
-                    estado = "BAJO STOCK"
-                    color_estado = "#f39c12"
-                else:
-                    estado = "DISPONIBLE"
-                    color_estado = "#27ae60"
-
-                self.tabla_inventario.setItem(row, 0, QTableWidgetItem(str(id_producto)))
-                self.tabla_inventario.setItem(row, 1, QTableWidgetItem(nombre))
-                self.tabla_inventario.setItem(row, 2, QTableWidgetItem(categoria or "Sin categoría"))
-                self.tabla_inventario.setItem(row, 3, QTableWidgetItem(f"Q{precio:.2f}"))
-                self.tabla_inventario.setItem(row, 4, QTableWidgetItem(str(stock)))
-                self.tabla_inventario.setItem(row, 5, QTableWidgetItem(str(limite_stock or "N/A")))
-
-                item_estado = QTableWidgetItem(estado)
-                item_estado.setForeground(QColor(color_estado))
-                self.tabla_inventario.setItem(row, 6, item_estado)
-
-                widget_acciones = QWidget()
-                layout_acciones = QHBoxLayout(widget_acciones)
-                layout_acciones.setContentsMargins(5, 2, 5, 2)
-
-                btn_editar = QPushButton("✏️")
-                btn_editar.setToolTip("Editar producto")
-                btn_editar.setFixedSize(30, 25)
-                btn_editar.setStyleSheet(
-                    "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 3px; }")
-                btn_editar.clicked.connect(lambda checked, prod_id=id_producto: self.editar_producto(prod_id))
-
-                btn_eliminar = QPushButton("🗑️")
-                btn_eliminar.setToolTip("Eliminar producto")
-                btn_eliminar.setFixedSize(30, 25)
-                btn_eliminar.setStyleSheet(
-                    "QPushButton { background-color: #e74c3c; color: white; border: none; border-radius: 3px; }")
-                btn_eliminar.clicked.connect(lambda checked, prod_id=id_producto: self.eliminar_producto(prod_id))
-
-                layout_acciones.addWidget(btn_editar)
-                layout_acciones.addWidget(btn_eliminar)
-                layout_acciones.addStretch()
-
-                self.tabla_inventario.setCellWidget(row, 7, widget_acciones)
-            self.actualizar_estadisticas(productos)
-
+            self.productos_completos = self.bd.consultar(query)
+            self._actualizar_tabla(self.productos_completos)
+            self.actualizar_estadisticas(self.productos_completos)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo cargar el inventario:\n{str(e)}")
 
+    def _actualizar_tabla(self, productos):
+        """Actualizar la tabla con la lista de productos proporcionada"""
+        self.tabla_inventario.setRowCount(len(productos))
+
+        for row, producto in enumerate(productos):
+            id_producto, nombre, categoria, precio, stock, limite_stock, imagen, tipo_imagen = producto
+
+            # Estado del stock
+            if stock == 0:
+                estado = "SIN STOCK"
+                color_estado = "#e74c3c"
+            elif stock <= (limite_stock or 5):
+                estado = "BAJO STOCK"
+                color_estado = "#f39c12"
+            else:
+                estado = "DISPONIBLE"
+                color_estado = "#27ae60"
+
+            # Llenar la tabla
+            self.tabla_inventario.setItem(row, 0, QTableWidgetItem(str(id_producto)))
+            self.tabla_inventario.setItem(row, 1, QTableWidgetItem(nombre))
+            self.tabla_inventario.setItem(row, 2, QTableWidgetItem(categoria or "Sin categoría"))
+            self.tabla_inventario.setItem(row, 3, QTableWidgetItem(f"Q{precio:.2f}"))
+            self.tabla_inventario.setItem(row, 4, QTableWidgetItem(str(stock)))
+            self.tabla_inventario.setItem(row, 5, QTableWidgetItem(str(limite_stock or "N/A")))
+
+            item_estado = QTableWidgetItem(estado)
+            item_estado.setForeground(QColor(color_estado))
+            self.tabla_inventario.setItem(row, 6, item_estado)
+
+            # Botones de acciones
+            widget_acciones = QWidget()
+            layout_acciones = QHBoxLayout(widget_acciones)
+            layout_acciones.setContentsMargins(5, 2, 5, 2)
+
+            btn_editar = QPushButton("✏️")
+            btn_editar.setToolTip("Editar producto")
+            btn_editar.setFixedSize(30, 25)
+            btn_editar.setStyleSheet(
+                "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 3px; }")
+            btn_editar.clicked.connect(lambda checked, prod_id=id_producto: self.editar_producto(prod_id))
+
+            btn_eliminar = QPushButton("🗑️")
+            btn_eliminar.setToolTip("Eliminar producto")
+            btn_eliminar.setFixedSize(30, 25)
+            btn_eliminar.setStyleSheet(
+                "QPushButton { background-color: #e74c3c; color: white; border: none; border-radius: 3px; }")
+            btn_eliminar.clicked.connect(lambda checked, prod_id=id_producto: self.eliminar_producto(prod_id))
+
+            layout_acciones.addWidget(btn_editar)
+            layout_acciones.addWidget(btn_eliminar)
+            layout_acciones.addStretch()
+
+            self.tabla_inventario.setCellWidget(row, 7, widget_acciones)
+
     def filtrar_inventario(self):
+        """Filtrar los productos según los criterios de búsqueda"""
         try:
+            # Verificar que productos_completos existe y tiene datos
+            if not hasattr(self, 'productos_completos') or not self.productos_completos:
+                # Si no hay datos, cargar inventario pero SIN llamar recursivamente
+                self._cargar_datos_sin_filtro()
+                return
+
             texto_buscar = self.txt_buscar.text().lower()
             categoria_id = self.combo_categoria.currentData()
 
@@ -2087,48 +2121,51 @@ class PantallaMostrarInventario(QWidget):
                 # Filtro por texto
                 coincide_texto = (texto_buscar in nombre.lower() or
                                   texto_buscar in str(id_producto) or
-                                  texto_buscar in (categoria or "").lower())
+                                  (categoria and texto_buscar in categoria.lower()))
 
                 # Filtro por categoría
                 coincide_categoria = (categoria_id == 0 or
-                                      (producto[2] and categoria_id == self.obtener_id_categoria(producto[2])))
+                                      self.obtener_id_categoria(categoria) == categoria_id)
 
                 if coincide_texto and coincide_categoria:
                     productos_filtrados.append(producto)
 
             # Actualizar tabla con productos filtrados
-            self.tabla_inventario.setRowCount(len(productos_filtrados))
-            for row, producto in enumerate(productos_filtrados):
-                for col, valor in enumerate(producto[:7]):  # Solo las primeras 7 columnas
-                    if col == 3:  # Precio
-                        self.tabla_inventario.setItem(row, col, QTableWidgetItem(f"Q{valor:.2f}"))
-                    else:
-                        self.tabla_inventario.setItem(row, col, QTableWidgetItem(str(valor)))
-
+            self._actualizar_tabla(productos_filtrados)
             self.actualizar_estadisticas(productos_filtrados)
 
         except Exception as e:
             print(f"Error al filtrar: {e}")
 
     def obtener_id_categoria(self, nombre_categoria):
-        categorias = self.bd.consultar("SELECT id_categoria FROM Categoria WHERE nombre=?", (nombre_categoria,))
-        return categorias[0][0] if categorias else 0
+        """Obtener el ID de categoría a partir del nombre"""
+        if not nombre_categoria:
+            return 0
+        try:
+            categorias = self.bd.consultar("SELECT id_categoria FROM Categoria WHERE nombre=?", (nombre_categoria,))
+            return categorias[0][0] if categorias else 0
+        except:
+            return 0
 
     def actualizar_estadisticas(self, productos):
-        total_productos = len(productos)
-        total_stock = sum(producto[4] for producto in productos)
-        sin_stock = sum(1 for producto in productos if producto[4] == 0)
-        bajo_stock = sum(1 for producto in productos if 0 < producto[4] <= (producto[5] or 5))
-        valor_total = sum(producto[3] * producto[4] for producto in productos)
+        """Actualizar las estadísticas mostradas"""
+        try:
+            total_productos = len(productos)
+            total_stock = sum(producto[4] for producto in productos)
+            sin_stock = sum(1 for producto in productos if producto[4] == 0)
+            bajo_stock = sum(1 for producto in productos if 0 < producto[4] <= (producto[5] or 5))
+            valor_total = sum(producto[3] * producto[4] for producto in productos)
 
-        estadisticas = (
-            f"📊 Estadísticas: {total_productos} productos | "
-            f"Stock total: {total_stock} unidades | "
-            f"Sin stock: {sin_stock} | "
-            f"Bajo stock: {bajo_stock} | "
-            f"Valor total: Q{valor_total:,.2f}"
-        )
-        self.lbl_estadisticas.setText(estadisticas)
+            estadisticas = (
+                f"📊 Estadísticas: {total_productos} productos | "
+                f"Stock total: {total_stock} unidades | "
+                f"Sin stock: {sin_stock} | "
+                f"Bajo stock: {bajo_stock} | "
+                f"Valor total: Q{valor_total:,.2f}"
+            )
+            self.lbl_estadisticas.setText(estadisticas)
+        except Exception as e:
+            print(f"Error al actualizar estadísticas: {e}")
 
     def editar_producto(self, id_producto):
         """Abre diálogo para editar producto"""
@@ -2148,19 +2185,18 @@ class PantallaMostrarInventario(QWidget):
             try:
                 self.bd.ejecutar("DELETE FROM Producto WHERE id_producto=?", (id_producto,))
                 QMessageBox.information(self, "Éxito", "Producto eliminado correctamente")
-                self.cargar_inventario()
+                self.cargar_inventario()  # Recargar para reflejar los cambios
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"No se pudo eliminar el producto:\n{str(e)}")
 
     def exportar_reporte(self):
+        """Exportar reporte del inventario"""
         try:
-
             QMessageBox.information(self, "Exportar Reporte",
                                     "Funcionalidad de exportación en desarrollo.\n"
                                     "Se exportaría el inventario actual a CSV/PDF.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo exportar el reporte:\n{str(e)}")
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
