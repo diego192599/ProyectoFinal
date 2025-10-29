@@ -364,53 +364,64 @@ class VentanaTipoUsuario(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Selecciona tipo de usuario")
-        self.resize(400, 250)
+        self.showMaximized()  # Ocupa toda la pantalla
         self._aplicar_estilos()
         self._construir_ui()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
-            QWidget { background-color: #f2f6fa; font-family: 'Segoe UI'; }
+            QWidget { 
+                background-color: #f2f6fa; 
+                font-family: 'Segoe UI'; 
+            }
             QPushButton {
                 background-color: #007bff;
                 color: white;
-                border-radius: 10px;
-                padding: 8px 12px;
-                font-size: 14px;
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 13px;
+                min-height: 32px;
             }
-            QPushButton:hover { background-color: #0056b3; }
+            QPushButton:hover { 
+                background-color: #0056b3; 
+            }
         """)
 
     def _construir_ui(self):
         v = QVBoxLayout()
+        v.setContentsMargins(30, 30, 30, 30)
+        v.setSpacing(15)
+
         titulo = QLabel("Bienvenido a Librería ABC")
         titulo.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo.setStyleSheet("color: #2c3e50;")
 
         btn_padres = QPushButton("Padres de familia")
         btn_padres.clicked.connect(self._abrir_padres)
+        btn_padres.setFixedWidth(200)  # Solo ancho fijo
 
         btn_admin = QPushButton("Administrador / Empleado")
         btn_admin.clicked.connect(self._abrir_admin)
+        btn_admin.setFixedWidth(200)  # Solo ancho fijo
 
         v.addStretch()
         v.addWidget(titulo)
         v.addSpacing(20)
-        v.addWidget(btn_padres)
-        v.addWidget(btn_admin)
+        v.addWidget(btn_padres, alignment=Qt.AlignmentFlag.AlignCenter)
+        v.addWidget(btn_admin, alignment=Qt.AlignmentFlag.AlignCenter)
         v.addStretch()
         self.setLayout(v)
 
     def _abrir_padres(self):
         self.hide()
         self.padres = VentanaLoginPadres()
-        self.padres.show()
+        self.padres.showMaximized()
 
     def _abrir_admin(self):
         self.hide()
         self.admin = VentanaLoginAdmin()
-        self.admin.show()
-
+        self.admin.showMaximized()
 
 class VentanaLoginPadres(QWidget):
     def __init__(self):
