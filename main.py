@@ -6,9 +6,9 @@ from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QLineEdit,
     QVBoxLayout, QMessageBox, QInputDialog, QHBoxLayout,
     QStackedLayout, QListWidget, QListWidgetItem, QFileDialog,
-    QSpinBox,QTableWidget, QTableWidgetItem, QComboBox,QScrollArea
+    QSpinBox, QTableWidget, QTableWidgetItem, QComboBox, QScrollArea
 )
-from PySide6.QtGui import QFont, QPixmap,QColor
+from PySide6.QtGui import QFont, QPixmap, QColor
 from PySide6.QtCore import Qt
 import base64
 
@@ -326,7 +326,6 @@ class ManejadorImagenes:
         try:
             if not os.path.exists(ruta_imagen):
                 return None, None
-
 
             extension = os.path.splitext(ruta_imagen)[1].lower().replace('.', '')
 
@@ -731,7 +730,6 @@ class VentanaPadres(QWidget):
                 self.panel_contenido.addWidget(lbl_vacio)
                 return
 
-
             from PySide6.QtWidgets import QScrollArea
             scroll_area = QScrollArea()
             scroll_widget = QWidget()
@@ -779,7 +777,6 @@ class VentanaPadres(QWidget):
                     pixmap_default = pixmap_default.scaled(75, 75, Qt.AspectRatioMode.KeepAspectRatio)
                     lbl_imagen.setPixmap(pixmap_default)
 
-
                 info_widget = QWidget()
                 info_layout = QVBoxLayout(info_widget)
                 info_layout.setSpacing(5)
@@ -798,7 +795,6 @@ class VentanaPadres(QWidget):
                 info_layout.addWidget(lbl_precio)
                 info_layout.addWidget(lbl_stock)
                 info_layout.addStretch()
-
 
                 btn_comprar = QPushButton("Comprar")
                 btn_comprar.setFixedSize(80, 30)
@@ -866,12 +862,10 @@ class VentanaPadres(QWidget):
             }
         """)
 
-
         for item in self.lista_seleccionados:
             self.lista_mis_utiles.addItem(item)
 
         self.panel_contenido.addWidget(self.lista_mis_utiles)
-
 
         layout_botones = QHBoxLayout()
 
@@ -985,7 +979,6 @@ class VentanaPadres(QWidget):
     def cerrar_sesion(self):
         self.close()
 
-
     def _limpiar_panel(self):
 
         for i in reversed(range(self.panel_contenido.count())):
@@ -998,6 +991,7 @@ class VentanaPadres(QWidget):
                     nested_item = item.layout().itemAt(j)
                     if nested_item.widget():
                         nested_item.widget().setParent(None)
+
 
 class VentanaAdmin(QWidget):
     def __init__(self, bd, mostrar_login=None):
@@ -1075,7 +1069,6 @@ class VentanaAdmin(QWidget):
             else:
                 id_categoria = categorias[0][0]
 
-
             productos_ejemplo = [
                 (id_categoria, "Cuaderno cuadriculado 100 hojas", 25.50, 50, 10),
                 (id_categoria, "Lápices HB paquete x12", 15.00, 100, 20),
@@ -1093,7 +1086,6 @@ class VentanaAdmin(QWidget):
                 (id_categoria, "Transportador 180°", 7.50, 80, 15),
                 (id_categoria, "Block de hojas blancas", 30.00, 35, 8)
             ]
-
 
             productos_agregados = 0
 
@@ -1175,16 +1167,13 @@ class PantallaAgregarProducto(QWidget):
         self.txt_limite = QLineEdit()
         self.txt_limite.setPlaceholderText("Límite stock (opcional)")
 
-
         lbl_imagen = QLabel("Imagen del producto:")
         self.btn_seleccionar_imagen = QPushButton("Seleccionar Imagen")
         self.btn_seleccionar_imagen.clicked.connect(self._seleccionar_imagen)
 
-
         layout_boton_imagen = QHBoxLayout()
         layout_boton_imagen.addWidget(self.btn_seleccionar_imagen)
         layout_boton_imagen.addStretch()
-
 
         self.lbl_vista_previa = QLabel()
         self.lbl_vista_previa.setFixedSize(150, 150)
@@ -1196,13 +1185,11 @@ class PantallaAgregarProducto(QWidget):
         self.lbl_vista_previa.setText("Vista previa\n(150x150 px)")
         self.lbl_vista_previa.setWordWrap(True)
 
-
         self.lbl_info_imagen = QLabel("No se ha seleccionado imagen")
         self.lbl_info_imagen.setStyleSheet("color: #666; font-size: 12px;")
 
         btn_agregar = QPushButton("Agregar producto")
         btn_agregar.clicked.connect(self._agregar_producto)
-
 
         widgets = [
             self.txt_id_categoria,
@@ -1686,7 +1673,6 @@ class VentanaDetalleProducto(QWidget):
         lbl_precio = QLabel(f"<b>Precio:</b> Q{precio:.2f}")
         lbl_stock = QLabel(f"<b>Stock disponible:</b> {stock}")
 
-
         layout_cantidad = QHBoxLayout()
         lbl_cantidad = QLabel("Cantidad:")
         self.spin_cantidad = QSpinBox()
@@ -1696,7 +1682,6 @@ class VentanaDetalleProducto(QWidget):
         layout_cantidad.addWidget(lbl_cantidad)
         layout_cantidad.addWidget(self.spin_cantidad)
         layout_cantidad.addStretch()
-
 
         layout_botones = QHBoxLayout()
         btn_comprar = QPushButton("Comprar Ahora")
@@ -1714,14 +1699,11 @@ class VentanaDetalleProducto(QWidget):
         layout_botones.addWidget(btn_carrito)
         layout_botones.addWidget(btn_cancelar)
 
-
         self.lbl_total = QLabel(f"<h3>Total: Q{precio:.2f}</h3>")
         self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_total.setStyleSheet("color: #e74c3c; font-weight: bold;")
 
-
         self.spin_cantidad.valueChanged.connect(self._actualizar_total)
-
 
         layout.addWidget(lbl_imagen_grande)
         layout.addWidget(lbl_nombre)
@@ -1745,12 +1727,10 @@ class VentanaDetalleProducto(QWidget):
         id_producto, nombre, stock, precio, _, _ = self.producto
         cantidad = self.spin_cantidad.value()
 
-
         if cantidad > stock:
             QMessageBox.warning(self, "Stock insuficiente",
                                 f"No hay suficiente stock. Disponible: {stock}")
             return
-
 
         total = precio * cantidad
         respuesta = QMessageBox.question(
@@ -1767,25 +1747,21 @@ class VentanaDetalleProducto(QWidget):
 
                 fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
                 self.bd.ejecutar(
                     "INSERT INTO Venta (id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
                     (self.id_usuario, fecha, total, 1)  # id_empleado temporal = 1
                 )
                 id_venta = self.bd.cursor.lastrowid
 
-
                 self.bd.ejecutar(
                     "INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
                     (id_venta, id_producto, cantidad, precio, total)
                 )
 
-
                 self.bd.ejecutar(
                     "UPDATE Producto SET stock = stock - ? WHERE id_producto = ?",
                     (cantidad, id_producto)
                 )
-
 
                 try:
                     self.bd.ejecutar(
@@ -1890,7 +1866,6 @@ class PantallaNuevaCompra(QWidget):
         self.txt_id_proveedor.setPlaceholderText("ID Proveedor")
         layout.addWidget(self.txt_id_proveedor)
 
-        # Agregar productos
         h = QHBoxLayout()
         self.txt_id_producto = QLineEdit();
         self.txt_id_producto.setPlaceholderText("ID Producto")
@@ -1903,11 +1878,9 @@ class PantallaNuevaCompra(QWidget):
         for w in [self.txt_id_producto, self.txt_cantidad, self.txt_precio, btn_agregar]: h.addWidget(w)
         layout.addLayout(h)
 
-        # Lista de productos agregados
         self.lbl_productos = QLabel("Productos agregados:\n")
         layout.addWidget(self.lbl_productos)
 
-        # Botón finalizar compra
         btn_final = QPushButton("Finalizar compra")
         btn_final.clicked.connect(self._finalizar_compra)
         layout.addWidget(btn_final)
@@ -2001,13 +1974,11 @@ class PantallaMostrarInventario(QWidget):
     def _construir_ui(self):
         layout = QVBoxLayout()
 
-        # Título
         titulo = QLabel("Inventario de Productos")
         titulo.setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50; margin: 10px;")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(titulo)
 
-        # Controles de búsqueda y filtros
         controles_layout = QHBoxLayout()
 
         self.txt_buscar = QLineEdit()
@@ -2018,10 +1989,10 @@ class PantallaMostrarInventario(QWidget):
         self.combo_categoria.addItem("Todas las categorías", 0)
         self.combo_categoria.currentIndexChanged.connect(self.filtrar_inventario)
 
-        self.btn_actualizar = QPushButton("🔄 Actualizar")
+        self.btn_actualizar = QPushButton(" Actualizar")
         self.btn_actualizar.clicked.connect(self.cargar_inventario)
 
-        self.btn_exportar = QPushButton("📊 Exportar Reporte")
+        self.btn_exportar = QPushButton(" Exportar Reporte")
         self.btn_exportar.clicked.connect(self.exportar_reporte)
 
         controles_layout.addWidget(QLabel("Buscar:"))
@@ -2034,7 +2005,6 @@ class PantallaMostrarInventario(QWidget):
 
         layout.addLayout(controles_layout)
 
-        # Tabla de inventario
         self.tabla_inventario = QTableWidget()
         self.tabla_inventario.setColumnCount(8)
         self.tabla_inventario.setHorizontalHeaderLabels([
@@ -2042,20 +2012,18 @@ class PantallaMostrarInventario(QWidget):
             "Límite Stock", "Estado", "Acciones"
         ])
 
-        # Configurar tabla
         self.tabla_inventario.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.tabla_inventario.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.tabla_inventario.setAlternatingRowColors(True)
         self.tabla_inventario.horizontalHeader().setStretchLastSection(True)
 
-        # Ajustar anchos de columnas
-        self.tabla_inventario.setColumnWidth(0, 50)  # ID
-        self.tabla_inventario.setColumnWidth(1, 200)  # Nombre
-        self.tabla_inventario.setColumnWidth(2, 120)  # Categoría
-        self.tabla_inventario.setColumnWidth(3, 80)  # Precio
-        self.tabla_inventario.setColumnWidth(4, 70)  # Stock
-        self.tabla_inventario.setColumnWidth(5, 90)  # Límite
-        self.tabla_inventario.setColumnWidth(6, 100)  # Estado
+        self.tabla_inventario.setColumnWidth(0, 50)
+        self.tabla_inventario.setColumnWidth(1, 200)
+        self.tabla_inventario.setColumnWidth(2, 120)
+        self.tabla_inventario.setColumnWidth(3, 80)
+        self.tabla_inventario.setColumnWidth(4, 70)
+        self.tabla_inventario.setColumnWidth(5, 90)
+        self.tabla_inventario.setColumnWidth(6, 100)
 
         layout.addWidget(self.tabla_inventario)
 
@@ -2067,7 +2035,6 @@ class PantallaMostrarInventario(QWidget):
         self.setLayout(layout)
 
     def cargar_categorias(self):
-        """Carga las categorías en el combobox"""
         self.combo_categoria.clear()
         self.combo_categoria.addItem("Todas las categorías", 0)
 
@@ -2076,12 +2043,11 @@ class PantallaMostrarInventario(QWidget):
             self.combo_categoria.addItem(nombre, id_cat)
 
     def cargar_inventario(self):
-        """Carga todos los productos en la tabla"""
+
         try:
-            # Cargar categorías primero
+
             self.cargar_categorias()
 
-            # Consulta para obtener productos con información de categoría
             query = """
                 SELECT 
                     p.id_producto, p.nombre, c.nombre as categoria, 
@@ -2111,7 +2077,6 @@ class PantallaMostrarInventario(QWidget):
                     estado = "DISPONIBLE"
                     color_estado = "#27ae60"
 
-                # Llenar la tabla
                 self.tabla_inventario.setItem(row, 0, QTableWidgetItem(str(id_producto)))
                 self.tabla_inventario.setItem(row, 1, QTableWidgetItem(nombre))
                 self.tabla_inventario.setItem(row, 2, QTableWidgetItem(categoria or "Sin categoría"))
@@ -2119,12 +2084,10 @@ class PantallaMostrarInventario(QWidget):
                 self.tabla_inventario.setItem(row, 4, QTableWidgetItem(str(stock)))
                 self.tabla_inventario.setItem(row, 5, QTableWidgetItem(str(limite_stock or "N/A")))
 
-                # Celda de estado con color
                 item_estado = QTableWidgetItem(estado)
                 item_estado.setForeground(QColor(color_estado))
                 self.tabla_inventario.setItem(row, 6, item_estado)
 
-                # Botones de acción
                 widget_acciones = QWidget()
                 layout_acciones = QHBoxLayout(widget_acciones)
                 layout_acciones.setContentsMargins(5, 2, 5, 2)
@@ -2148,15 +2111,12 @@ class PantallaMostrarInventario(QWidget):
                 layout_acciones.addStretch()
 
                 self.tabla_inventario.setCellWidget(row, 7, widget_acciones)
-
-            # Actualizar estadísticas
             self.actualizar_estadisticas(productos)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo cargar el inventario:\n{str(e)}")
 
     def filtrar_inventario(self):
-        """Filtra los productos según los criterios de búsqueda"""
         try:
             texto_buscar = self.txt_buscar.text().lower()
             categoria_id = self.combo_categoria.currentData()
@@ -2192,12 +2152,10 @@ class PantallaMostrarInventario(QWidget):
             print(f"Error al filtrar: {e}")
 
     def obtener_id_categoria(self, nombre_categoria):
-        """Obtiene el ID de categoría por nombre"""
         categorias = self.bd.consultar("SELECT id_categoria FROM Categoria WHERE nombre=?", (nombre_categoria,))
         return categorias[0][0] if categorias else 0
 
     def actualizar_estadisticas(self, productos):
-        """Actualiza las estadísticas del inventario"""
         total_productos = len(productos)
         total_stock = sum(producto[4] for producto in productos)
         sin_stock = sum(1 for producto in productos if producto[4] == 0)
@@ -2236,14 +2194,14 @@ class PantallaMostrarInventario(QWidget):
                 QMessageBox.critical(self, "Error", f"No se pudo eliminar el producto:\n{str(e)}")
 
     def exportar_reporte(self):
-        """Exporta un reporte del inventario"""
         try:
-            # Aquí podrías implementar la exportación a CSV o PDF
+
             QMessageBox.information(self, "Exportar Reporte",
                                     "Funcionalidad de exportación en desarrollo.\n"
                                     "Se exportaría el inventario actual a CSV/PDF.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo exportar el reporte:\n{str(e)}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
