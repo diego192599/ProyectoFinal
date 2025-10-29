@@ -1,15 +1,19 @@
 import sys
+import os
 import sqlite3
 from datetime import datetime
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton, QLineEdit,
-    QVBoxLayout, QMessageBox,QInputDialog, QHBoxLayout, QStackedLayout, QListWidget,
-    QListWidgetItem
+    QVBoxLayout, QMessageBox, QInputDialog, QHBoxLayout,
+    QStackedLayout, QListWidget, QListWidgetItem, QFileDialog,
+    QSpinBox
 )
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtCore import Qt
+import base64
 
 DB_FILE = "sistema.db"
+
 
 class ConexionBD:
     def __init__(self, archivo):
@@ -21,7 +25,6 @@ class ConexionBD:
         self.conexion.close()
 
     def crear_tablas(self):
-        # CORREGIDO: Nombre consistente de tablas
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Categoria(
             id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL
@@ -34,7 +37,8 @@ class ConexionBD:
             precio REAL,
             stock INTEGER,
             limite_stock INTEGER,
-            imagen TEXT,
+            imagen BLOB,
+            tipo_imagen TEXT,
             FOREIGN KEY(id_categoria) REFERENCES Categoria(id_categoria)
         )""")
 
@@ -70,7 +74,6 @@ class ConexionBD:
             tipo TEXT NOT NULL
         )""")
 
-        # CORREGIDO: Referencias correctas en tablas
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS Venta(
             id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -145,9 +148,48 @@ class ConexionBD:
         self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
+
+class ManejadorImagenes:
+    @staticmethod
+    def imagen_a_blob(ruta_imagen):
+        try:
+            if not os.path.exists(ruta_imagen):
+                return None, None
+
+            extension = os.path.splitext(ruta_imagen)[1].lower()
+
+            with open(ruta_imagen, 'rb') as file:
+                blob_data = file.read()
+
+            return blob_data, extension
+        except Exception as e:
+            print(f"Error al convertir imagen: {e}")
+            return None, None
+
+    @staticmethod
+    def blob_a_imagen(blob_data, tipo_imagen):
+        try:
+            if blob_data is None:
+                return QPixmap()
+
+            pixmap = QPixmap()
+            pixmap.loadFromData(blob_data)
+            return pixmap
+        except Exception as e:
+            print(f"Error al cargar imagen desde blob: {e}")
+            return QPixmap()
+
+    @staticmethod
+    def obtener_imagen_predeterminada():
+        pixmap = QPixmap(100, 100)
+        pixmap.fill(Qt.GlobalColor.lightGray)
+        return pixmap
+
+
 class Categoria:
     def __init__(self, nombre):
         self.nombre = nombre
+
 
 class Producto:
     def __init__(self, id_categoria, nombre, precio, stock, limite_stock, imagen):
@@ -158,6 +200,7 @@ class Producto:
         self.limite_stock = limite_stock
         self.imagen = imagen
 
+
 class Cliente:
     def __init__(self, nombre, telefono, correo, total_compras=0, descuento=0):
         self.nombre = nombre
@@ -166,6 +209,7 @@ class Cliente:
         self.total_compras = total_compras
         self.descuento = descuento
 
+
 class Empleado:
     def __init__(self, nombre, telefono, correo, salario):
         self.nombre = nombre
@@ -173,19 +217,22 @@ class Empleado:
         self.correo = correo
         self.salario = salario
 
+
 class Proveedor:
     def __init__(self, nombre, empresa, telefono):
         self.nombre = nombre
         self.empresa = empresa
         self.telefono = telefono
 
+
 class ListaUtiles:
     def __init__(self, grado, id_cliente):
         self.grado = grado
         self.id_cliente = id_cliente
 
+
 class Usuario:
-    def __init__(self, nombre, usuario, contrasena,tipo):
+    def __init__(self, nombre, usuario, contrasena, tipo):
         self.nombre = nombre
         self.usuario = usuario
         self.contrasena = contrasena
@@ -205,6 +252,7 @@ class Compra:
 
     def calcular_total(self):
         self.total = sum(d.subtotal for d in self.detalles)
+
 
 class DetalleCompra:
     def __init__(self, id_detalle=0, id_compra=0, id_producto=0, cantidad=0, precio_unitario=0.0):
@@ -230,6 +278,7 @@ class Venta:
 
     def calcular_total(self):
         self.total = sum(d.subtotal for d in self.detalles)
+
 
 class DetalleVenta:
     def __init__(self, id_detalle=0, id_venta=0, id_producto=0, cantidad=0, precio_unitario=0.0):
@@ -268,6 +317,48 @@ class GestionUsuario:
         filas = self.bd.consultar("SELECT * FROM Usuario")
         for f in filas:
             print(f"ID:{f[0]} | Nombre:{f[1]} | Usuario:{f[2]}")
+
+
+class ManejadorImagenes:
+    @staticmethod
+    def imagen_a_blob(ruta_imagen):
+
+        try:
+            if not os.path.exists(ruta_imagen):
+                return None, None
+
+
+            extension = os.path.splitext(ruta_imagen)[1].lower().replace('.', '')
+
+            with open(ruta_imagen, 'rb') as file:
+                blob_data = file.read()
+
+            return blob_data, extension
+        except Exception as e:
+            print(f"Error al convertir imagen: {e}")
+            return None, None
+
+    @staticmethod
+    def blob_a_imagen(blob_data, tipo_imagen):
+
+        try:
+            if blob_data is None:
+                return QPixmap()
+
+            pixmap = QPixmap()
+            pixmap.loadFromData(blob_data)
+            return pixmap
+        except Exception as e:
+            print(f"Error al cargar imagen desde blob: {e}")
+            return QPixmap()
+
+    @staticmethod
+    def obtener_imagen_predeterminada():
+
+        pixmap = QPixmap(100, 100)
+        pixmap.fill(Qt.GlobalColor.lightGray)
+        return pixmap
+
 
 class VentanaTipoUsuario(QWidget):
     def __init__(self):
@@ -320,6 +411,7 @@ class VentanaTipoUsuario(QWidget):
         self.admin = VentanaLoginAdmin()
         self.admin.show()
 
+
 class VentanaLoginPadres(QWidget):
     def __init__(self):
         super().__init__()
@@ -367,7 +459,7 @@ class VentanaLoginPadres(QWidget):
         if filas:
             QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
             self.hide()
-            self.padres_principal = VentanaPadres(self.bd,filas[0][0])
+            self.padres_principal = VentanaPadres(self.bd, filas[0][0])
             self.padres_principal.show()
         else:
             QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
@@ -443,6 +535,7 @@ class VentanaRegistroPadres(QWidget):
         self.close()
         self.login = VentanaLoginPadres()
         self.login.show()
+
 
 class VentanaLoginAdmin(QWidget):
     def __init__(self):
@@ -568,13 +661,14 @@ class VentanaRegistroAdmin(QWidget):
         self.login = VentanaLoginAdmin()
         self.login.show()
 
+
 class VentanaPadres(QWidget):
     def __init__(self, bd, id_usuario):
         super().__init__()
         self.bd = bd
         self.id_usuario = id_usuario
-        self.setWindowTitle("Padres de Familia")
-        self.resize(600, 400)
+        self.setWindowTitle("Padres de Familia - Catálogo")
+        self.resize(900, 3000)
         self.lista_seleccionados = []
         self._construir_ui()
 
@@ -588,7 +682,7 @@ class VentanaPadres(QWidget):
         self.btn_cerrar = QPushButton("Cerrar Sesión")
 
         self.btn_catalogo.clicked.connect(self.mostrar_catalogo)
-        self.btn_listado.clicked.connect(self.mostrar_listado)
+        self.btn_listado.clicked.connect(self.mostrar_listado)  # AQUÍ ESTÁ EL PROBLEMA
         self.btn_cerrar.clicked.connect(self.cerrar_sesion)
 
         for btn in [self.btn_catalogo, self.btn_listado, self.btn_cerrar]:
@@ -598,102 +692,301 @@ class VentanaPadres(QWidget):
 
         self.panel_contenido = QVBoxLayout()
         self.main_layout.addLayout(self.panel_contenido)
-        self.panel_contenido.addWidget(QLabel(f"Bienvenido, Padre ID {self.id_usuario}"))
+
+        usuario_info = self.bd.consultar("SELECT nombre FROM Usuario WHERE id_usuario=?", (self.id_usuario,))
+        nombre_usuario = usuario_info[0][0] if usuario_info else "Usuario"
+        lbl_bienvenida = QLabel(f"Bienvenido, {nombre_usuario}")
+        lbl_bienvenida.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;")
+        self.panel_contenido.addWidget(lbl_bienvenida)
+
+    def mostrar_catalogo(self):
+
+        self._limpiar_panel()
+
+        titulo = QLabel("Catálogo de Útiles Escolares")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #2980b9; margin: 10px;")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.panel_contenido.addWidget(titulo)
+
+        try:
+            productos = self.bd.consultar(
+                "SELECT id_producto, nombre, stock, precio, imagen, tipo_imagen FROM Producto"
+            )
+
+            if not productos:
+                lbl_vacio = QLabel("No hay productos disponibles en el catálogo.")
+                lbl_vacio.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                lbl_vacio.setStyleSheet("color: #7f8c8d; font-size: 14px; margin: 20px;")
+                self.panel_contenido.addWidget(lbl_vacio)
+                return
+
+
+            from PySide6.QtWidgets import QScrollArea
+            scroll_area = QScrollArea()
+            scroll_widget = QWidget()
+            scroll_layout = QVBoxLayout(scroll_widget)
+
+            for producto in productos:
+                id_producto, nombre, stock, precio, imagen_blob, tipo_imagen = producto
+
+                # Crear widget para cada producto
+                widget_producto = QWidget()
+                widget_producto.setFixedHeight(120)
+                widget_producto.setStyleSheet("""
+                    QWidget {
+                        border: 1px solid #bdc3c7;
+                        border-radius: 8px;
+                        margin: 5px;
+                        background-color: white;
+                    }
+                    QWidget:hover {
+                        border: 2px solid #3498db;
+                        background-color: #f8f9fa;
+                    }
+                """)
+
+                layout_producto = QHBoxLayout(widget_producto)
+                layout_producto.setContentsMargins(10, 10, 10, 10)
+
+                # Imagen del producto
+                lbl_imagen = QLabel()
+                lbl_imagen.setFixedSize(80, 80)
+                lbl_imagen.setStyleSheet("border: 1px solid #ecf0f1; border-radius: 4px;")
+                lbl_imagen.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+                if imagen_blob:
+                    pixmap = ManejadorImagenes.blob_a_imagen(imagen_blob, tipo_imagen)
+                    if not pixmap.isNull():
+                        pixmap = pixmap.scaled(75, 75, Qt.AspectRatioMode.KeepAspectRatio,
+                                               Qt.TransformationMode.SmoothTransformation)
+                        lbl_imagen.setPixmap(pixmap)
+                    else:
+                        lbl_imagen.setPixmap(ManejadorImagenes.obtener_imagen_predeterminada())
+                else:
+
+                    pixmap_default = ManejadorImagenes.obtener_imagen_predeterminada()
+                    pixmap_default = pixmap_default.scaled(75, 75, Qt.AspectRatioMode.KeepAspectRatio)
+                    lbl_imagen.setPixmap(pixmap_default)
+
+
+                info_widget = QWidget()
+                info_layout = QVBoxLayout(info_widget)
+                info_layout.setSpacing(5)
+
+                lbl_nombre = QLabel(nombre)
+                lbl_nombre.setStyleSheet("font-weight: bold; font-size: 14px; color: #2c3e50;")
+
+                lbl_precio = QLabel(f"Precio: Q{precio:.2f}")
+                lbl_precio.setStyleSheet("font-size: 13px; color: #27ae60; font-weight: bold;")
+
+                lbl_stock = QLabel(f"Stock disponible: {stock}")
+                color_stock = "#e74c3c" if stock == 0 else "#f39c12" if stock < 5 else "#27ae60"
+                lbl_stock.setStyleSheet(f"font-size: 12px; color: {color_stock};")
+
+                info_layout.addWidget(lbl_nombre)
+                info_layout.addWidget(lbl_precio)
+                info_layout.addWidget(lbl_stock)
+                info_layout.addStretch()
+
+
+                btn_comprar = QPushButton("Comprar")
+                btn_comprar.setFixedSize(80, 30)
+                btn_comprar.setStyleSheet("""
+                    QPushButton {
+                        background-color: #3498db;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover {
+                        background-color: #2980b9;
+                    }
+                    QPushButton:disabled {
+                        background-color: #bdc3c7;
+                        color: #7f8c8d;
+                    }
+                """)
+                btn_comprar.clicked.connect(lambda checked, prod=producto: self._comprar_producto(prod))
+
+                if stock == 0:
+                    btn_comprar.setEnabled(False)
+                    btn_comprar.setText("Sin Stock")
+
+                layout_producto.addWidget(lbl_imagen)
+                layout_producto.addWidget(info_widget, 1)
+                layout_producto.addWidget(btn_comprar)
+
+                scroll_layout.addWidget(widget_producto)
+
+            scroll_area.setWidget(scroll_widget)
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setStyleSheet("QScrollArea { border: none; }")
+            self.panel_contenido.addWidget(scroll_area)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar el catálogo: {str(e)}")
 
     def mostrar_listado(self):
-        self._limpiar_panel()
-        self.panel_contenido.addWidget(QLabel("Mi Listado de Útiles:"))
 
+        self._limpiar_panel()
+
+        titulo = QLabel("Mi Listado de Útiles")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #2980b9; margin: 10px;")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.panel_contenido.addWidget(titulo)
+
+        # Lista de útiles seleccionados
         self.lista_mis_utiles = QListWidget()
+        self.lista_mis_utiles.setStyleSheet("""
+            QListWidget {
+                border: 1px solid #bdc3c7;
+                border-radius: 5px;
+                padding: 5px;
+                background-color: white;
+            }
+            QListWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #ecf0f1;
+            }
+            QListWidget::item:selected {
+                background-color: #3498db;
+                color: white;
+            }
+        """)
+
+
         for item in self.lista_seleccionados:
-            self.lista_mis_utiles.addItem(QListWidgetItem(item))
+            self.lista_mis_utiles.addItem(item)
+
         self.panel_contenido.addWidget(self.lista_mis_utiles)
 
 
-        self.btn_agregar = QPushButton("Agregar útil del catálogo")
+        layout_botones = QHBoxLayout()
+
+        self.btn_agregar = QPushButton("➕ Agregar útil")
         self.btn_agregar.clicked.connect(self.agregar_util)
-        self.panel_contenido.addWidget(self.btn_agregar)
+        self.btn_agregar.setStyleSheet("""
+            QPushButton {
+                background-color: #27ae60;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #219a52;
+            }
+        """)
+
+        self.btn_eliminar = QPushButton(" Eliminar útil")
+        self.btn_eliminar.clicked.connect(self.eliminar_util)
+        self.btn_eliminar.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+        """)
+
+        self.btn_limpiar = QPushButton("Limpiar lista")
+        self.btn_limpiar.clicked.connect(self.limpiar_lista)
+        self.btn_limpiar.setStyleSheet("""
+            QPushButton {
+                background-color: #f39c12;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #d35400;
+            }
+        """)
+
+        layout_botones.addWidget(self.btn_agregar)
+        layout_botones.addWidget(self.btn_eliminar)
+        layout_botones.addWidget(self.btn_limpiar)
+
+        self.panel_contenido.addLayout(layout_botones)
 
     def agregar_util(self):
-        productos = ["Cuaderno", "Lápiz", "Borrador", "Colores", "Mochila", "Regla"]
-        item, ok = QInputDialog.getItem(self, "Agregar útil", "Selecciona un útil:", productos, 0, False)
+
+        productos = ["Cuaderno", "Lápiz", "Borrador", "Colores", "Mochila", "Regla",
+                     "Tijeras", "Pegamento", "Compás", "Transportador", "Calculadora"]
+
+        item, ok = QInputDialog.getItem(
+            self,
+            "Agregar útil",
+            "Selecciona un útil:",
+            productos,
+            0,
+            False
+        )
+
         if ok and item:
             if item not in self.lista_seleccionados:
                 self.lista_seleccionados.append(item)
-                self.lista_mis_utiles.addItem(QListWidgetItem(item))
+                self.lista_mis_utiles.addItem(item)
+                QMessageBox.information(self, "Éxito", f"Se agregó '{item}' a tu listado.")
             else:
-                QMessageBox.information(self, "Info", "El útil ya está en tu listado.")
+                QMessageBox.information(self, "Información", "El útil ya está en tu listado.")
 
-    def mostrar_catalogo(self):
-        self._limpiar_panel()
-        self.panel_contenido.addWidget(QLabel("Catálogo de Útiles:"))
+    def eliminar_util(self):
 
-        self.cursor = self.bd.conexion.cursor()
-        self.cursor.execute("SELECT id_producto, nombre, stock, precio FROM Producto")
-        productos = self.cursor.fetchall()
+        current_item = self.lista_mis_utiles.currentItem()
+        if current_item:
+            item_text = current_item.text()
+            self.lista_seleccionados.remove(item_text)
+            self.lista_mis_utiles.takeItem(self.lista_mis_utiles.currentRow())
+            QMessageBox.information(self, "Éxito", f"Se eliminó '{item_text}' de tu listado.")
+        else:
+            QMessageBox.warning(self, "Advertencia", "Selecciona un útil para eliminar.")
 
-        self.lista_productos = QListWidget()
-        for p in productos:
-            self.lista_productos.addItem(f"{p[1]} - Stock: {p[2]} - Q{p[3]}")
+    def limpiar_lista(self):
 
-        self.panel_contenido.addWidget(self.lista_productos)
-
-        self.btn_comprar = QPushButton("Comprar útil seleccionado")
-        self.btn_comprar.clicked.connect(lambda: self.comprar_util_padre(productos))
-        self.panel_contenido.addWidget(self.btn_comprar)
-
-    def comprar_util_padre(self, productos):
-        item = self.lista_productos.currentItem()
-        if not item:
-            QMessageBox.warning(self, "Aviso", "Selecciona un producto.")
-            return
-
-        idx = self.lista_productos.currentRow()
-        id_producto, nombre, stock, precio = productos[idx]
-
-        if stock <= 0:
-            QMessageBox.warning(self, "Sin stock", f"No hay stock de {nombre}.")
-            return
-
-        cantidad = 1
-        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        try:
-            # CORREGIDO: Usar sistema de VENTAS para padres que compran
-            # Crear una venta
-            self.bd.ejecutar(
-                "INSERT INTO Venta (id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
-                (self.id_usuario, fecha, precio, 1)  # id_empleado temporal
+        if self.lista_seleccionados:
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmar limpieza",
+                "¿Estás seguro de que quieres limpiar toda tu lista de útiles?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
-            id_venta = self.bd.cursor.lastrowid
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.lista_seleccionados.clear()
+                self.lista_mis_utiles.clear()
+                QMessageBox.information(self, "Éxito", "Lista limpiada correctamente.")
+        else:
+            QMessageBox.information(self, "Información", "La lista ya está vacía.")
 
-            # Crear detalle de venta
-            self.bd.ejecutar(
-                "INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
-                (id_venta, id_producto, cantidad, precio, cantidad * precio)
-            )
-
-            # Actualizar stock (disminuir stock para ventas)
-            self.bd.ejecutar(
-                "UPDATE Producto SET stock = stock - ? WHERE id_producto = ?",
-                (cantidad, id_producto)
-            )
-
-        except sqlite3.Error as e:
-            QMessageBox.critical(self, "Error", f"Error en la base de datos: {e}")
-            return
-
-        QMessageBox.information(self, "Compra realizada", f"Has comprado {cantidad} {nombre}(s).")
-        self.mostrar_catalogo()
+    def _comprar_producto(self, producto):
+        self.ventana_detalle = VentanaDetalleProducto(producto, self.bd, self.id_usuario)
+        self.ventana_detalle.show()
 
     def cerrar_sesion(self):
         self.close()
 
+
     def _limpiar_panel(self):
+
         for i in reversed(range(self.panel_contenido.count())):
-            widget = self.panel_contenido.itemAt(i).widget()
-            if widget is not None:
-                widget.setParent(None)
+            item = self.panel_contenido.itemAt(i)
+            if item.widget():
+                item.widget().setParent(None)
+            elif item.layout():
+                # Limpiar layouts anidados
+                for j in reversed(range(item.layout().count())):
+                    nested_item = item.layout().itemAt(j)
+                    if nested_item.widget():
+                        nested_item.widget().setParent(None)
 
 class VentanaAdmin(QWidget):
     def __init__(self, bd, mostrar_login=None):
@@ -733,15 +1026,18 @@ class VentanaAdmin(QWidget):
         for w in self.pantallas.values():
             self.stacked_layout.addWidget(w)
 
+
         botones = [
             ("Agregar categoría", lambda: self._cambiar_pantalla("categoria")),
             ("Agregar producto", lambda: self._cambiar_pantalla("producto")),
+            ("Agregar productos ejemplo", self._agregar_productos_ejemplo),
             ("Agregar cliente", lambda: self._cambiar_pantalla("cliente")),
             ("Agregar empleado", lambda: self._cambiar_pantalla("empleado")),
             ("Agregar proveedor", lambda: self._cambiar_pantalla("proveedor")),
             ("Vender productos", lambda: self._cambiar_pantalla("ventas")),
             ("Cerrar sesión", self._abrir_login)
         ]
+
         for texto, func in botones:
             btn = QPushButton(texto)
             btn.setFixedHeight(40)
@@ -754,6 +1050,61 @@ class VentanaAdmin(QWidget):
         self.stacked_layout.addWidget(lbl_inicio)
         self.stacked_layout.setCurrentWidget(lbl_inicio)
 
+    def _agregar_productos_ejemplo(self):
+
+        try:
+
+            categorias = self.bd.consultar("SELECT id_categoria FROM Categoria WHERE nombre='Útiles Escolares'")
+
+            if not categorias:
+
+                self.bd.ejecutar("INSERT INTO Categoria (nombre) VALUES (?)", ("Útiles Escolares",))
+                id_categoria = self.bd.cursor.lastrowid
+            else:
+                id_categoria = categorias[0][0]
+
+
+            productos_ejemplo = [
+                (id_categoria, "Cuaderno cuadriculado 100 hojas", 25.50, 50, 10),
+                (id_categoria, "Lápices HB paquete x12", 15.00, 100, 20),
+                (id_categoria, "Borradores blancos paquete x4", 8.00, 200, 30),
+                (id_categoria, "Regla plástica 30cm", 12.00, 75, 15),
+                (id_categoria, "Tajador doble con depósito", 10.50, 150, 25),
+                (id_categoria, "Colores x24 piezas", 45.00, 30, 5),
+                (id_categoria, "Tijeras escolares punta roma", 18.00, 60, 12),
+                (id_categoria, "Pegamento en barra 40g", 9.50, 120, 20),
+                (id_categoria, "Mochila escolar antigolpes", 350.00, 15, 3),
+                (id_categoria, "Estuche para lápices", 65.00, 40, 8),
+                (id_categoria, "Calculadora científica", 120.00, 25, 5),
+                (id_categoria, "Diccionario español", 85.00, 20, 4),
+                (id_categoria, "Compás de precisión", 35.00, 45, 10),
+                (id_categoria, "Transportador 180°", 7.50, 80, 15),
+                (id_categoria, "Block de hojas blancas", 30.00, 35, 8)
+            ]
+
+
+            productos_agregados = 0
+
+            for id_cat, nombre, precio, stock, limite_stock in productos_ejemplo:
+
+                existente = self.bd.consultar("SELECT id_producto FROM Producto WHERE nombre=?", (nombre,))
+
+                if not existente:
+                    self.bd.ejecutar(
+                        "INSERT INTO Producto (id_categoria, nombre, precio, stock, limite_stock, imagen, tipo_imagen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (id_cat, nombre, precio, stock, limite_stock, None, None)
+                    )
+                    productos_agregados += 1
+
+            mensaje = f"Se agregaron {productos_agregados} productos de ejemplo exitosamente."
+            if productos_agregados < len(productos_ejemplo):
+                mensaje += f"\n{len(productos_ejemplo) - productos_agregados} productos ya existían."
+
+            QMessageBox.information(self, "Productos de ejemplo", mensaje)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudieron agregar los productos de ejemplo:\n{str(e)}")
+
     def _cambiar_pantalla(self, key):
         widget = self.pantallas.get(key)
         if widget:
@@ -763,6 +1114,7 @@ class VentanaAdmin(QWidget):
         self.hide()
         self.mostrar_login = VentanaTipoUsuario()
         self.mostrar_login.show()
+
 
 class PantallaAgregarCategoria(QWidget):
     def __init__(self, bd):
@@ -786,11 +1138,20 @@ class PantallaAgregarCategoria(QWidget):
         QMessageBox.information(self, "Éxito", "Categoría agregada correctamente")
         self.txt_nombre.clear()
 
+
 class PantallaAgregarProducto(QWidget):
     def __init__(self, bd):
         super().__init__()
         self.bd = bd
+        self.ruta_imagen = None
+        self.datos_imagen = None
+        self.tipo_imagen = None
+        self._construir_ui()
+
+    def _construir_ui(self):
         v = QVBoxLayout()
+
+        # Campos existentes
         self.txt_id_categoria = QLineEdit()
         self.txt_id_categoria.setPlaceholderText("ID categoría")
         self.txt_nombre = QLineEdit()
@@ -801,14 +1162,100 @@ class PantallaAgregarProducto(QWidget):
         self.txt_stock.setPlaceholderText("Stock")
         self.txt_limite = QLineEdit()
         self.txt_limite.setPlaceholderText("Límite stock (opcional)")
-        self.txt_imagen = QLineEdit()
-        self.txt_imagen.setPlaceholderText("Ruta imagen (opcional)")
+
+
+        lbl_imagen = QLabel("Imagen del producto:")
+        self.btn_seleccionar_imagen = QPushButton("Seleccionar Imagen")
+        self.btn_seleccionar_imagen.clicked.connect(self._seleccionar_imagen)
+
+
+        layout_boton_imagen = QHBoxLayout()
+        layout_boton_imagen.addWidget(self.btn_seleccionar_imagen)
+        layout_boton_imagen.addStretch()
+
+
+        self.lbl_vista_previa = QLabel()
+        self.lbl_vista_previa.setFixedSize(150, 150)
+        self.lbl_vista_previa.setStyleSheet("""
+            border: 2px dashed #ccc;
+            background-color: #f9f9f9;
+        """)
+        self.lbl_vista_previa.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_vista_previa.setText("Vista previa\n(150x150 px)")
+        self.lbl_vista_previa.setWordWrap(True)
+
+
+        self.lbl_info_imagen = QLabel("No se ha seleccionado imagen")
+        self.lbl_info_imagen.setStyleSheet("color: #666; font-size: 12px;")
+
         btn_agregar = QPushButton("Agregar producto")
         btn_agregar.clicked.connect(self._agregar_producto)
-        for w in [self.txt_id_categoria, self.txt_nombre, self.txt_precio,
-                  self.txt_stock, self.txt_limite, self.txt_imagen, btn_agregar]:
-            v.addWidget(w)
+
+
+        widgets = [
+            self.txt_id_categoria,
+            self.txt_nombre,
+            self.txt_precio,
+            self.txt_stock,
+            self.txt_limite,
+            lbl_imagen,
+            layout_boton_imagen,
+            self.lbl_vista_previa,
+            self.lbl_info_imagen,
+            btn_agregar
+        ]
+
+        for w in widgets:
+            if isinstance(w, QHBoxLayout):
+                v.addLayout(w)
+            else:
+                v.addWidget(w)
+
         self.setLayout(v)
+
+    def _seleccionar_imagen(self):
+
+        ruta, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleccionar imagen del producto",
+            "",
+            "Imágenes (*.png *.jpg *.jpeg *.bmp *.gif);;Todos los archivos (*)"
+        )
+
+        if ruta:
+            self.ruta_imagen = ruta
+            self.datos_imagen, self.tipo_imagen = ManejadorImagenes.imagen_a_blob(ruta)
+
+            if self.datos_imagen:
+
+                pixmap = ManejadorImagenes.blob_a_imagen(self.datos_imagen, self.tipo_imagen)
+                if not pixmap.isNull():
+
+                    pixmap = pixmap.scaled(140, 140, Qt.AspectRatioMode.KeepAspectRatio,
+                                           Qt.TransformationMode.SmoothTransformation)
+                    self.lbl_vista_previa.setPixmap(pixmap)
+
+                    # Mostrar información del archivo
+                    nombre_archivo = os.path.basename(ruta)
+                    tamano_kb = len(self.datos_imagen) / 1024
+                    self.lbl_info_imagen.setText(
+                        f"Imagen: {nombre_archivo}\n"
+                        f"Tipo: {self.tipo_imagen.upper()}\n"
+                        f"Tamaño: {tamano_kb:.1f} KB"
+                    )
+                    self.lbl_info_imagen.setStyleSheet("color: green; font-size: 12px;")
+                else:
+                    self._mostrar_error_imagen("Error al cargar la imagen")
+            else:
+                self._mostrar_error_imagen("No se pudo cargar la imagen")
+
+    def _mostrar_error_imagen(self, mensaje):
+
+        self.lbl_vista_previa.setText("Error\ncargando\nimagen")
+        self.lbl_info_imagen.setText(mensaje)
+        self.lbl_info_imagen.setStyleSheet("color: red; font-size: 12px;")
+        self.datos_imagen = None
+        self.tipo_imagen = None
 
     def _agregar_producto(self):
         try:
@@ -818,33 +1265,56 @@ class PantallaAgregarProducto(QWidget):
             stock = int(self.txt_stock.text().strip())
             limite_stock = self.txt_limite.text().strip()
             limite_stock = int(limite_stock) if limite_stock else None
-            imagen = self.txt_imagen.text().strip()
+
             if not nombre:
-                raise ValueError("Nombre vacío")
+                raise ValueError("El nombre no puede estar vacío")
+
         except ValueError as e:
             QMessageBox.warning(self, "Error", f"Datos inválidos: {e}")
             return
-        self.bd.ejecutar(
-            "INSERT INTO Producto(id_categoria,nombre,precio,stock,limite_stock,imagen) VALUES(?,?,?,?,?,?)",
-            (id_categoria, nombre, precio, stock, limite_stock, imagen)
-        )
-        QMessageBox.information(self, "Éxito", "Producto agregado correctamente")
+
+        try:
+
+            self.bd.ejecutar(
+                "INSERT INTO Producto(id_categoria, nombre, precio, stock, limite_stock, imagen, tipo_imagen) VALUES(?,?,?,?,?,?,?)",
+                (id_categoria, nombre, precio, stock, limite_stock, self.datos_imagen, self.tipo_imagen)
+            )
+
+            QMessageBox.information(self, "Éxito", "Producto agregado correctamente")
+            self._limpiar_formulario()
+
+        except sqlite3.Error as e:
+            QMessageBox.critical(self, "Error", f"Error al guardar en la base de datos: {e}")
+
+    def _limpiar_formulario(self):
+
         self.txt_id_categoria.clear()
         self.txt_nombre.clear()
         self.txt_precio.clear()
         self.txt_stock.clear()
         self.txt_limite.clear()
-        self.txt_imagen.clear()
+        self.ruta_imagen = None
+        self.datos_imagen = None
+        self.tipo_imagen = None
+        self.lbl_vista_previa.clear()
+        self.lbl_vista_previa.setText("Vista previa\n(150x150 px)")
+        self.lbl_info_imagen.setText("No se ha seleccionado imagen")
+        self.lbl_info_imagen.setStyleSheet("color: #666; font-size: 12px;")
+
 
 class PantallaAgregarCliente(QWidget):
     def __init__(self, bd):
         super().__init__()
         self.bd = bd
         v = QVBoxLayout()
-        self.txt_nombre = QLineEdit(); self.txt_nombre.setPlaceholderText("Nombre")
-        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono")
-        self.txt_correo = QLineEdit(); self.txt_correo.setPlaceholderText("Correo")
-        btn_agregar = QPushButton("Agregar cliente"); btn_agregar.clicked.connect(self._agregar_cliente)
+        self.txt_nombre = QLineEdit();
+        self.txt_nombre.setPlaceholderText("Nombre")
+        self.txt_telefono = QLineEdit();
+        self.txt_telefono.setPlaceholderText("Teléfono")
+        self.txt_correo = QLineEdit();
+        self.txt_correo.setPlaceholderText("Correo")
+        btn_agregar = QPushButton("Agregar cliente");
+        btn_agregar.clicked.connect(self._agregar_cliente)
         for w in [self.txt_nombre, self.txt_telefono, self.txt_correo, btn_agregar]:
             v.addWidget(w)
         self.setLayout(v)
@@ -861,18 +1331,26 @@ class PantallaAgregarCliente(QWidget):
             (nombre, telefono, correo, 0, 0)
         )
         QMessageBox.information(self, "Éxito", "Cliente agregado correctamente")
-        self.txt_nombre.clear(); self.txt_telefono.clear(); self.txt_correo.clear()
+        self.txt_nombre.clear();
+        self.txt_telefono.clear();
+        self.txt_correo.clear()
+
 
 class PantallaAgregarEmpleado(QWidget):
     def __init__(self, bd):
         super().__init__()
         self.bd = bd
         v = QVBoxLayout()
-        self.txt_nombre = QLineEdit(); self.txt_nombre.setPlaceholderText("Nombre")
-        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono")
-        self.txt_correo = QLineEdit(); self.txt_correo.setPlaceholderText("Correo")
-        self.txt_salario = QLineEdit(); self.txt_salario.setPlaceholderText("Salario")
-        btn_agregar = QPushButton("Agregar empleado"); btn_agregar.clicked.connect(self._agregar_empleado)
+        self.txt_nombre = QLineEdit();
+        self.txt_nombre.setPlaceholderText("Nombre")
+        self.txt_telefono = QLineEdit();
+        self.txt_telefono.setPlaceholderText("Teléfono")
+        self.txt_correo = QLineEdit();
+        self.txt_correo.setPlaceholderText("Correo")
+        self.txt_salario = QLineEdit();
+        self.txt_salario.setPlaceholderText("Salario")
+        btn_agregar = QPushButton("Agregar empleado");
+        btn_agregar.clicked.connect(self._agregar_empleado)
         for w in [self.txt_nombre, self.txt_telefono, self.txt_correo, self.txt_salario, btn_agregar]:
             v.addWidget(w)
         self.setLayout(v)
@@ -892,17 +1370,25 @@ class PantallaAgregarEmpleado(QWidget):
             (nombre, telefono, correo, salario)
         )
         QMessageBox.information(self, "Éxito", "Empleado agregado correctamente")
-        self.txt_nombre.clear(); self.txt_telefono.clear(); self.txt_correo.clear(); self.txt_salario.clear()
+        self.txt_nombre.clear();
+        self.txt_telefono.clear();
+        self.txt_correo.clear();
+        self.txt_salario.clear()
+
 
 class PantallaAgregarProveedor(QWidget):
     def __init__(self, bd):
         super().__init__()
         self.bd = bd
         v = QVBoxLayout()
-        self.txt_nombre = QLineEdit(); self.txt_nombre.setPlaceholderText("Nombre")
-        self.txt_empresa = QLineEdit(); self.txt_empresa.setPlaceholderText("Empresa")
-        self.txt_telefono = QLineEdit(); self.txt_telefono.setPlaceholderText("Teléfono")
-        btn_agregar = QPushButton("Agregar proveedor"); btn_agregar.clicked.connect(self._agregar_proveedor)
+        self.txt_nombre = QLineEdit();
+        self.txt_nombre.setPlaceholderText("Nombre")
+        self.txt_empresa = QLineEdit();
+        self.txt_empresa.setPlaceholderText("Empresa")
+        self.txt_telefono = QLineEdit();
+        self.txt_telefono.setPlaceholderText("Teléfono")
+        btn_agregar = QPushButton("Agregar proveedor");
+        btn_agregar.clicked.connect(self._agregar_proveedor)
         for w in [self.txt_nombre, self.txt_empresa, self.txt_telefono, btn_agregar]:
             v.addWidget(w)
         self.setLayout(v)
@@ -919,7 +1405,10 @@ class PantallaAgregarProveedor(QWidget):
             (nombre, empresa, telefono)
         )
         QMessageBox.information(self, "Éxito", "Proveedor agregado correctamente")
-        self.txt_nombre.clear(); self.txt_empresa.clear(); self.txt_telefono.clear()
+        self.txt_nombre.clear();
+        self.txt_empresa.clear();
+        self.txt_telefono.clear()
+
 
 class VentanaCrearLista(QWidget):
     def __init__(self, bd):
@@ -959,6 +1448,7 @@ class VentanaCrearLista(QWidget):
         )
         QMessageBox.information(self, "Éxito", "Lista creada correctamente")
         self.close()
+
 
 class VentanaNuevaVenta(QWidget):
     def __init__(self, bd):
@@ -1054,6 +1544,7 @@ class VentanaNuevaVenta(QWidget):
         QMessageBox.information(self, "Éxito", f"Venta registrada con ID {id_venta}")
         self.close()
 
+
 class VentanaNuevaCompra(QWidget):
     def __init__(self, bd):
         super().__init__()
@@ -1144,6 +1635,196 @@ class VentanaNuevaCompra(QWidget):
         QMessageBox.information(self, "Éxito", f"Compra registrada con ID {id_compra}")
         self.close()
 
+
+class VentanaDetalleProducto(QWidget):
+    def __init__(self, producto, bd, id_usuario):
+        super().__init__()
+        self.producto = producto
+        self.bd = bd
+        self.id_usuario = id_usuario
+        self.setWindowTitle("Detalle del Producto")
+        self.resize(300, 400)
+        self._construir_ui()
+
+    def _construir_ui(self):
+        layout = QVBoxLayout()
+
+        id_producto, nombre, stock, precio, imagen_blob, tipo_imagen = self.producto
+
+        # Imagen grande
+        lbl_imagen_grande = QLabel()
+        lbl_imagen_grande.setFixedSize(200, 200)
+        lbl_imagen_grande.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_imagen_grande.setStyleSheet("border: 1px solid gray;")
+
+        if imagen_blob:
+            pixmap = ManejadorImagenes.blob_a_imagen(imagen_blob, tipo_imagen)
+            if not pixmap.isNull():
+                pixmap = pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio)
+                lbl_imagen_grande.setPixmap(pixmap)
+            else:
+                lbl_imagen_grande.setPixmap(ManejadorImagenes.obtener_imagen_predeterminada())
+        else:
+            lbl_imagen_grande.setPixmap(ManejadorImagenes.obtener_imagen_predeterminada())
+
+        # Información del producto
+        lbl_nombre = QLabel(f"<h2>{nombre}</h2>")
+        lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        lbl_precio = QLabel(f"<b>Precio:</b> Q{precio:.2f}")
+        lbl_stock = QLabel(f"<b>Stock disponible:</b> {stock}")
+
+
+        layout_cantidad = QHBoxLayout()
+        lbl_cantidad = QLabel("Cantidad:")
+        self.spin_cantidad = QSpinBox()
+        self.spin_cantidad.setMinimum(1)
+        self.spin_cantidad.setMaximum(stock)
+        self.spin_cantidad.setValue(1)
+        layout_cantidad.addWidget(lbl_cantidad)
+        layout_cantidad.addWidget(self.spin_cantidad)
+        layout_cantidad.addStretch()
+
+
+        layout_botones = QHBoxLayout()
+        btn_comprar = QPushButton("Comprar Ahora")
+        btn_comprar.setStyleSheet("background-color: #28a745; color: white; font-weight: bold;")
+        btn_comprar.clicked.connect(self._comprar_producto)
+
+        btn_carrito = QPushButton("Agregar al Carrito")
+        btn_carrito.setStyleSheet("background-color: #007bff; color: white;")
+        btn_carrito.clicked.connect(self._agregar_al_carrito)
+
+        btn_cancelar = QPushButton("Cancelar")
+        btn_cancelar.clicked.connect(self.close)
+
+        layout_botones.addWidget(btn_comprar)
+        layout_botones.addWidget(btn_carrito)
+        layout_botones.addWidget(btn_cancelar)
+
+
+        self.lbl_total = QLabel(f"<h3>Total: Q{precio:.2f}</h3>")
+        self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_total.setStyleSheet("color: #e74c3c; font-weight: bold;")
+
+
+        self.spin_cantidad.valueChanged.connect(self._actualizar_total)
+
+
+        layout.addWidget(lbl_imagen_grande)
+        layout.addWidget(lbl_nombre)
+        layout.addWidget(lbl_precio)
+        layout.addWidget(lbl_stock)
+        layout.addLayout(layout_cantidad)
+        layout.addWidget(self.lbl_total)
+        layout.addLayout(layout_botones)
+
+        self.setLayout(layout)
+
+    def _actualizar_total(self):
+
+        _, _, _, precio, _, _ = self.producto
+        cantidad = self.spin_cantidad.value()
+        total = precio * cantidad
+        self.lbl_total.setText(f"<h3>Total: Q{total:.2f}</h3>")
+
+    def _comprar_producto(self):
+
+        id_producto, nombre, stock, precio, _, _ = self.producto
+        cantidad = self.spin_cantidad.value()
+
+
+        if cantidad > stock:
+            QMessageBox.warning(self, "Stock insuficiente",
+                                f"No hay suficiente stock. Disponible: {stock}")
+            return
+
+
+        total = precio * cantidad
+        respuesta = QMessageBox.question(
+            self,
+            "Confirmar Compra",
+            f"¿Confirmar compra de {cantidad} {nombre}(s)?\n"
+            f"Precio unitario: Q{precio:.2f}\n"
+            f"Total: Q{total:.2f}",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if respuesta == QMessageBox.StandardButton.Yes:
+            try:
+
+                fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+                self.bd.ejecutar(
+                    "INSERT INTO Venta (id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
+                    (self.id_usuario, fecha, total, 1)  # id_empleado temporal = 1
+                )
+                id_venta = self.bd.cursor.lastrowid
+
+
+                self.bd.ejecutar(
+                    "INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+                    (id_venta, id_producto, cantidad, precio, total)
+                )
+
+
+                self.bd.ejecutar(
+                    "UPDATE Producto SET stock = stock - ? WHERE id_producto = ?",
+                    (cantidad, id_producto)
+                )
+
+
+                try:
+                    self.bd.ejecutar(
+                        "UPDATE Cliente SET total_compras = total_compras + ? WHERE id_cliente = ?",
+                        (total, self.id_usuario)
+                    )
+                except:
+                    pass
+
+                QMessageBox.information(
+                    self,
+                    "Compra Exitosa",
+                    f"¡Compra realizada con éxito!\n"
+                    f"Producto: {nombre}\n"
+                    f"Cantidad: {cantidad}\n"
+                    f"Total: Q{total:.2f}\n"
+                    f"Número de venta: {id_venta}"
+                )
+
+                self.close()
+
+            except sqlite3.Error as e:
+                QMessageBox.critical(
+                    self,
+                    "Error en la compra",
+                    f"No se pudo completar la compra:\n{str(e)}"
+                )
+
+    def _agregar_al_carrito(self):
+        """Lógica para agregar producto al carrito de compras"""
+        id_producto, nombre, stock, precio, _, _ = self.producto
+        cantidad = self.spin_cantidad.value()
+
+        if cantidad > stock:
+            QMessageBox.warning(self, "Stock insuficiente",
+                                f"No hay suficiente stock. Disponible: {stock}")
+            return
+
+        total = precio * cantidad
+
+        QMessageBox.information(
+            self,
+            "Producto agregado",
+            f"Se agregó al carrito:\n"
+            f"Producto: {nombre}\n"
+            f"Cantidad: {cantidad}\n"
+            f"Total: Q{total:.2f}\n\n"
+            f"Nota: Esta funcionalidad está en desarrollo."
+        )
+
+
 class PantallaNuevaVenta(QWidget):
     def __init__(self, bd):
         super().__init__()
@@ -1185,6 +1866,7 @@ class PantallaNuevaVenta(QWidget):
         QMessageBox.information(self, "Venta realizada", f"Se vendió 1 {nombre}.")
         self.cargar_productos()
 
+
 class PantallaNuevaCompra(QWidget):
     def __init__(self, bd):
         super().__init__()
@@ -1198,10 +1880,14 @@ class PantallaNuevaCompra(QWidget):
 
         # Agregar productos
         h = QHBoxLayout()
-        self.txt_id_producto = QLineEdit(); self.txt_id_producto.setPlaceholderText("ID Producto")
-        self.txt_cantidad = QLineEdit(); self.txt_cantidad.setPlaceholderText("Cantidad")
-        self.txt_precio = QLineEdit(); self.txt_precio.setPlaceholderText("Precio unitario")
-        btn_agregar = QPushButton("Agregar producto"); btn_agregar.clicked.connect(self._agregar_producto)
+        self.txt_id_producto = QLineEdit();
+        self.txt_id_producto.setPlaceholderText("ID Producto")
+        self.txt_cantidad = QLineEdit();
+        self.txt_cantidad.setPlaceholderText("Cantidad")
+        self.txt_precio = QLineEdit();
+        self.txt_precio.setPlaceholderText("Precio unitario")
+        btn_agregar = QPushButton("Agregar producto");
+        btn_agregar.clicked.connect(self._agregar_producto)
         for w in [self.txt_id_producto, self.txt_cantidad, self.txt_precio, btn_agregar]: h.addWidget(w)
         layout.addLayout(h)
 
@@ -1227,7 +1913,9 @@ class PantallaNuevaCompra(QWidget):
             return
         self.productos_compra.append((id_prod, cantidad, precio))
         self._actualizar_lista()
-        self.txt_id_producto.clear(); self.txt_cantidad.clear(); self.txt_precio.clear()
+        self.txt_id_producto.clear();
+        self.txt_cantidad.clear();
+        self.txt_precio.clear()
 
     def _actualizar_lista(self):
         texto = "Productos agregados:\n"
@@ -1248,10 +1936,14 @@ class PantallaNuevaCompra(QWidget):
         self.bd.ejecutar("INSERT INTO Compra(id_proveedor, fecha) VALUES(?,?)", (id_proveedor, fecha))
         id_compra = self.bd.cursor.lastrowid
         for idp, cant, precio in self.productos_compra:
-            self.bd.ejecutar("INSERT INTO DetalleCompra(id_compra,id_producto,cantidad,precio) VALUES(?,?,?,?)", (id_compra, idp, cant, precio))
+            self.bd.ejecutar("INSERT INTO DetalleCompra(id_compra,id_producto,cantidad,precio) VALUES(?,?,?,?)",
+                             (id_compra, idp, cant, precio))
             self.bd.ejecutar("UPDATE Producto SET stock = stock + ? WHERE id_producto=?", (cant, idp))
         QMessageBox.information(self, "Éxito", f"Compra registrada con ID {id_compra}")
-        self.productos_compra.clear(); self.txt_id_proveedor.clear(); self.lbl_productos.setText("Productos agregados:\n")
+        self.productos_compra.clear();
+        self.txt_id_proveedor.clear();
+        self.lbl_productos.setText("Productos agregados:\n")
+
 
 class PantallaCrearLista(QWidget):
     def __init__(self, bd):
@@ -1259,9 +1951,12 @@ class PantallaCrearLista(QWidget):
         self.bd = bd
         layout = QVBoxLayout()
 
-        self.txt_grado = QLineEdit(); self.txt_grado.setPlaceholderText("Grado")
-        self.txt_id_cliente = QLineEdit(); self.txt_id_cliente.setPlaceholderText("ID Cliente")
-        btn_crear = QPushButton("Crear lista"); btn_crear.clicked.connect(self._crear_lista)
+        self.txt_grado = QLineEdit();
+        self.txt_grado.setPlaceholderText("Grado")
+        self.txt_id_cliente = QLineEdit();
+        self.txt_id_cliente.setPlaceholderText("ID Cliente")
+        btn_crear = QPushButton("Crear lista");
+        btn_crear.clicked.connect(self._crear_lista)
 
         for w in [self.txt_grado, self.txt_id_cliente, btn_crear]:
             layout.addWidget(w)
@@ -1273,13 +1968,16 @@ class PantallaCrearLista(QWidget):
         if not grado or not id_cliente:
             QMessageBox.warning(self, "Error", "Llena todos los campos")
             return
-        try: id_cliente = int(id_cliente)
+        try:
+            id_cliente = int(id_cliente)
         except:
             QMessageBox.warning(self, "Error", "ID Cliente inválido")
             return
         self.bd.ejecutar("INSERT INTO ListaUtiles(grado,id_cliente) VALUES(?,?)", (grado, id_cliente))
         QMessageBox.information(self, "Éxito", "Lista creada correctamente")
-        self.txt_grado.clear(); self.txt_id_cliente.clear()
+        self.txt_grado.clear();
+        self.txt_id_cliente.clear()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -1288,4 +1986,3 @@ if __name__ == "__main__":
     tipo_usuario.show()
 
     sys.exit(app.exec())
-
