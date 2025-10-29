@@ -21,6 +21,7 @@ class ConexionBD:
         self.conexion.close()
 
     def crear_tablas(self):
+        # CORREGIDO: Nombre consistente de tablas
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS Categoria(
             id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL
@@ -69,6 +70,7 @@ class ConexionBD:
             tipo TEXT NOT NULL
         )""")
 
+        # CORREGIDO: Referencias correctas en tablas
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS Venta(
             id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,8 +78,8 @@ class ConexionBD:
             fecha TEXT,
             total REAL,
             id_empleado INTEGER,
-            FOREIGN KEY(id_cliente) REFERENCES Usuario(id_usuario),
-            FOREIGN KEY(id_empleado) REFERENCES Usuario(id_usuario)
+            FOREIGN KEY(id_cliente) REFERENCES Cliente(id_cliente),
+            FOREIGN KEY(id_empleado) REFERENCES Empleado(id_empleado)
         )
         """)
 
@@ -90,17 +92,17 @@ class ConexionBD:
             precio_unitario REAL,
             subtotal REAL,
             FOREIGN KEY(id_venta) REFERENCES Venta(id_venta),
-            FOREIGN KEY(id_producto) REFERENCES Productos(id_producto)
+            FOREIGN KEY(id_producto) REFERENCES Producto(id_producto)
         )
         """)
 
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS Compra(
             id_compra INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_padre INTEGER,
+            id_proveedor INTEGER,
             fecha TEXT,
             total REAL,
-            FOREIGN KEY(id_padre) REFERENCES Usuario(id_usuario)
+            FOREIGN KEY(id_proveedor) REFERENCES Proveedor(id_proveedor)
         )
         """)
 
@@ -113,7 +115,7 @@ class ConexionBD:
             precio_unitario REAL,
             subtotal REAL,
             FOREIGN KEY(id_compra) REFERENCES Compra(id_compra),
-            FOREIGN KEY(id_producto) REFERENCES Productos(id_producto)
+            FOREIGN KEY(id_producto) REFERENCES Producto(id_producto)
         )
         """)
 
@@ -127,10 +129,10 @@ class ConexionBD:
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS DetalleListaUtiles(
             id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
             id_lista INTEGER,
-            codigo_producto INTEGER,
+            id_producto INTEGER,
             cantidad INTEGER,
             FOREIGN KEY(id_lista) REFERENCES ListaUtiles(id_lista),
-            FOREIGN KEY(codigo_producto) REFERENCES Producto(codigo_producto)
+            FOREIGN KEY(id_producto) REFERENCES Producto(id_producto)
         )""")
 
         self.conexion.commit()
@@ -655,11 +657,31 @@ class VentanaPadres(QWidget):
 
         cantidad = 1
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.cursor.execute("INSERT INTO Compra (id_padre, id_producto, cantidad, fecha) VALUES (?, ?, ?, ?)",
-                            (self.id_usuario, id_producto, cantidad, fecha))
 
-        self.cursor.execute("UPDATE Productos SET stock = stock - ? WHERE id_producto = ?", (cantidad, id_producto))
-        self.bd.conexion.commit()
+        try:
+            # CORREGIDO: Usar sistema de VENTAS para padres que compran
+            # Crear una venta
+            self.bd.ejecutar(
+                "INSERT INTO Venta (id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
+                (self.id_usuario, fecha, precio, 1)  # id_empleado temporal
+            )
+            id_venta = self.bd.cursor.lastrowid
+
+            # Crear detalle de venta
+            self.bd.ejecutar(
+                "INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+                (id_venta, id_producto, cantidad, precio, cantidad * precio)
+            )
+
+            # Actualizar stock (disminuir stock para ventas)
+            self.bd.ejecutar(
+                "UPDATE Producto SET stock = stock - ? WHERE id_producto = ?",
+                (cantidad, id_producto)
+            )
+
+        except sqlite3.Error as e:
+            QMessageBox.critical(self, "Error", f"Error en la base de datos: {e}")
+            return
 
         QMessageBox.information(self, "Compra realizada", f"Has comprado {cantidad} {nombre}(s).")
         self.mostrar_catalogo()
