@@ -861,62 +861,108 @@ class GestionUsuario:
         for f in filas:
             print(f"ID:{f[0]} | Nombre:{f[1]} | Usuario:{f[2]}")
 
+
 class VentanaTipoUsuario(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Selecciona tipo de usuario")
-        self.resize(400, 250)
+        self.showMaximized()  # Pantalla completa
         self._aplicar_estilos()
         self._construir_ui()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
-            QWidget { background-color: #f2f6fa; font-family: 'Segoe UI'; }
+            QWidget { 
+                background-color: #f2f6fa; 
+                font-family: 'Segoe UI'; 
+            }
             QPushButton {
                 background-color: #007bff;
                 color: white;
-                border-radius: 10px;
-                padding: 8px 12px;
-                font-size: 14px;
+                border-radius: 15px;
+                padding: 15px 25px;
+                font-size: 18px;
+                font-weight: bold;
+                min-width: 250px;
+                min-height: 60px;
+                margin: 10px;
             }
-            QPushButton:hover { background-color: #0056b3; }
+            QPushButton:hover { 
+                background-color: #0056b3; 
+            }
+            QLabel {
+                color: #1E40AF;
+            }
         """)
 
     def _construir_ui(self):
-        v = QVBoxLayout()
-        titulo = QLabel("Bienvenido a Librería ABC")
-        titulo.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout = QVBoxLayout()
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        btn_padres = QPushButton("Padres de familia")
+        container = QWidget()
+        container.setFixedSize(600, 500)
+        container_layout = QVBoxLayout(container)
+        container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        container_layout.setSpacing(30)
+
+        # Logo y título
+        logo_layout = QHBoxLayout()
+        logo_label = QLabel("📚")
+        logo_label.setStyleSheet("font-size: 48px;")
+        titulo_app = QLabel("Librería Escolar ABC")
+        titulo_app.setStyleSheet("font-size: 28px; font-weight: bold; color: #1E40AF; margin-left: 15px;")
+
+        logo_layout.addWidget(logo_label)
+        logo_layout.addWidget(titulo_app)
+        logo_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Título principal
+        titulo = QLabel("Bienvenido a Librería ABC")
+        titulo.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo.setStyleSheet("color: #1E293B; margin-bottom: 20px;")
+
+        # Subtítulo
+        subtitulo = QLabel("Selecciona tu tipo de usuario para continuar")
+        subtitulo.setFont(QFont("Segoe UI", 14))
+        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitulo.setStyleSheet("color: #64748B; margin-bottom: 40px;")
+
+        # Botones de selección
+        btn_padres = QPushButton("👨‍👩‍👧‍👦 Padres de Familia")
         btn_padres.clicked.connect(self._abrir_padres)
 
-        btn_admin = QPushButton("Administrador / Empleado")
+        btn_admin = QPushButton("👨‍💼 Administrador / Empleado")
         btn_admin.clicked.connect(self._abrir_admin)
 
-        v.addStretch()
-        v.addWidget(titulo)
-        v.addSpacing(20)
-        v.addWidget(btn_padres)
-        v.addWidget(btn_admin)
-        v.addStretch()
-        self.setLayout(v)
+        # Agregar elementos al contenedor
+        container_layout.addLayout(logo_layout)
+        container_layout.addWidget(titulo)
+        container_layout.addWidget(subtitulo)
+        container_layout.addWidget(btn_padres)
+        container_layout.addWidget(btn_admin)
+
+        # Agregar contenedor al layout principal
+        main_layout.addWidget(container)
+        self.setLayout(main_layout)
 
     def _abrir_padres(self):
         self.hide()
         self.padres = VentanaLoginPadres()
-        self.padres.show()
+        self.padres.showMaximized()
 
     def _abrir_admin(self):
         self.hide()
         self.admin = VentanaLoginAdmin()
-        self.admin.show()
+        self.admin.showMaximized()
+
+
 class VentanaLoginAdmin(QWidget):
     def __init__(self):
         super().__init__()
         self.bd = ConexionBD(DB_FILE)
         self.setWindowTitle("Iniciar Sesión - Admin/Empleado")
-        self.resize(450, 500)
+        self.showMaximized()  # Pantalla completa
         self._aplicar_estilos_login()
         self._construir_ui_login()
 
@@ -1134,13 +1180,15 @@ class VentanaLoginPadres(QWidget):
     def _volver(self):
         self.close()
         self.tipo_usuario = VentanaTipoUsuario()
-        self.tipo_usuario.show()
+        self.tipo_usuario.showMaximized()
+
+
 class VentanaLoginPadres(QWidget):
     def __init__(self):
         super().__init__()
         self.bd = ConexionBD(DB_FILE)
         self.setWindowTitle("Iniciar Sesión - Padres")
-        self.resize(450, 500)
+        self.showMaximized()  # Pantalla completa
         self._aplicar_estilos_login()
         self._construir_ui_login()
 
@@ -1295,18 +1343,19 @@ class VentanaLoginPadres(QWidget):
     def _volver(self):
         self.close()
         self.tipo_usuario = VentanaTipoUsuario()
-        self.tipo_usuario.show()
+        self.tipo_usuario.showMaximized()
 
 class VentanaRegistroModerno(QWidget):
-    def __init__(self, tipo_usuario="padre", bd=None):
-        super().__init__()
-        self.tipo_usuario = tipo_usuario
-        self.bd = bd if bd else ConexionBD(DB_FILE)
-        self.setWindowTitle(
-            f"Registro - {'Padres de Familia' if tipo_usuario == 'padre' else 'Administrador/Empleado'}")
-        self.resize(500, 700)
-        self._aplicar_estilos()
-        self._construir_ui()
+    class VentanaRegistroModerno(QWidget):
+        def __init__(self, tipo_usuario="padre", bd=None):
+            super().__init__()
+            self.tipo_usuario = tipo_usuario
+            self.bd = bd if bd else ConexionBD(DB_FILE)
+            self.setWindowTitle(
+                f"Registro - {'Padres de Familia' if tipo_usuario == 'padre' else 'Administrador/Empleado'}")
+            self.showMaximized()
+            self._aplicar_estilos()
+            self._construir_ui()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
