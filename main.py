@@ -258,7 +258,6 @@ class ManejadorRecursos:
         }
         return iconos.get(categoria.lower() if categoria else "", "📦")
 
-
 class VentanaInicio(QWidget):
     def __init__(self):
         super().__init__()
@@ -273,11 +272,13 @@ class VentanaInicio(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+
         header = QWidget()
         header.setFixedHeight(80)
         header.setStyleSheet("background-color: #1E40AF; color: white;")
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(30, 0, 30, 0)
+
 
         logo_layout = QHBoxLayout()
         logo_label = QLabel("📚")
@@ -286,6 +287,7 @@ class VentanaInicio(QWidget):
         titulo.setStyleSheet("font-size: 24px; font-weight: bold; color: white; margin-left: 10px;")
         logo_layout.addWidget(logo_label)
         logo_layout.addWidget(titulo)
+
 
         nav_layout = QHBoxLayout()
         nav_items = [
@@ -315,6 +317,7 @@ class VentanaInicio(QWidget):
             btn.clicked.connect(item_func)
             nav_layout.addWidget(btn)
 
+
         user_layout = QHBoxLayout()
         btn_login = QPushButton("Iniciar Sesión")
         btn_login.setStyleSheet("""
@@ -338,6 +341,7 @@ class VentanaInicio(QWidget):
         header_layout.addLayout(nav_layout)
         header_layout.addStretch()
         header_layout.addWidget(btn_login)
+
 
         hero = QWidget()
         hero.setFixedHeight(400)
@@ -380,13 +384,18 @@ class VentanaInicio(QWidget):
         hero_layout.addWidget(hero_subtitle)
         hero_layout.addWidget(hero_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
+
         features = self._crear_seccion_caracteristicas()
+
 
         productos = self._crear_seccion_productos()
 
+
         listas_utiles = self._crear_seccion_listas()
 
+
         footer = self._crear_footer()
+
 
         main_layout.addWidget(header)
         main_layout.addWidget(hero)
@@ -448,6 +457,7 @@ class VentanaInicio(QWidget):
             card_layout.addWidget(title)
             card_layout.addWidget(description)
 
+
             card.mousePressEvent = lambda event, func=funcion: func()
             features_grid.addWidget(card, i // 2, i % 2)
 
@@ -467,6 +477,7 @@ class VentanaInicio(QWidget):
         productos_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         productos_grid = QHBoxLayout()
+
 
         productos_data = [
             ("Cuadernos", "útiles escolares", "Desde Q25.00", self._ir_a_cuadernos),
@@ -537,6 +548,7 @@ class VentanaInicio(QWidget):
         tabla.setRowCount(5)
         tabla.setHorizontalHeaderLabels(["Grado", "Productos Incluidos", "Precio Total", "Acción"])
 
+
         datos_listas = [
             ("1°-3° Primaria", "Cuaderno, Lápices, Borradores", "Q 185.00", "Ver Lista"),
             ("4°-6° Primaria", "Cuadernos, Regla, Colores", "Q 220.00", "Ver Lista"),
@@ -549,6 +561,7 @@ class VentanaInicio(QWidget):
             tabla.setItem(fila, 0, QTableWidgetItem(grado))
             tabla.setItem(fila, 1, QTableWidgetItem(productos))
             tabla.setItem(fila, 2, QTableWidgetItem(precio))
+
 
             btn_ver = QPushButton(accion)
             btn_ver.setStyleSheet("""
@@ -566,6 +579,7 @@ class VentanaInicio(QWidget):
             """)
             btn_ver.clicked.connect(lambda checked, grad=grado: self._ver_lista_grado(grad))
             tabla.setCellWidget(fila, 3, btn_ver)
+
 
         tabla.setStyleSheet("""
             QTableWidget {
@@ -602,6 +616,7 @@ class VentanaInicio(QWidget):
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(100, 40, 100, 40)
 
+
         info_col = QVBoxLayout()
         info_title = QLabel("Librería Escolar ABC")
         info_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 20px;")
@@ -611,6 +626,7 @@ class VentanaInicio(QWidget):
 
         info_col.addWidget(info_title)
         info_col.addWidget(info_text)
+
 
         links_col = QVBoxLayout()
         links_title = QLabel("Enlaces Rápidos")
@@ -631,6 +647,7 @@ class VentanaInicio(QWidget):
             lbl.setCursor(Qt.CursorShape.PointingHandCursor)
             lbl.mousePressEvent = lambda event, func=link_func: func()
             links_col.addWidget(lbl)
+
 
         contact_col = QVBoxLayout()
         contact_title = QLabel("Contacto")
@@ -655,6 +672,7 @@ class VentanaInicio(QWidget):
         footer_layout.addLayout(contact_col)
 
         return footer
+
 
     def _ir_a_inicio(self):
 
@@ -711,8 +729,6 @@ class VentanaInicio(QWidget):
         self.hide()
         self.login_window = VentanaTipoUsuario()
         self.login_window.show()
-
-
 class Categoria:
     def __init__(self, nombre):
         self.nombre = nombre
@@ -889,6 +905,7 @@ class VentanaTipoUsuario(QWidget):
         container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         container_layout.setSpacing(30)
 
+
         logo_layout = QHBoxLayout()
         logo_label = QLabel("📚")
         logo_label.setStyleSheet("font-size: 48px;")
@@ -899,15 +916,18 @@ class VentanaTipoUsuario(QWidget):
         logo_layout.addWidget(titulo_app)
         logo_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+
         titulo = QLabel("Bienvenido a Librería ABC")
         titulo.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         titulo.setStyleSheet("color: #1E293B; margin-bottom: 20px;")
 
+
         subtitulo = QLabel("Selecciona tu tipo de usuario para continuar")
         subtitulo.setFont(QFont("Segoe UI", 14))
         subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitulo.setStyleSheet("color: #64748B; margin-bottom: 40px;")
+
 
         btn_padres = QPushButton("👨‍👩‍👧‍👦 Padres de Familia")
         btn_padres.clicked.connect(self._abrir_padres)
@@ -915,11 +935,13 @@ class VentanaTipoUsuario(QWidget):
         btn_admin = QPushButton("👨‍💼 Administrador / Empleado")
         btn_admin.clicked.connect(self._abrir_admin)
 
+
         container_layout.addLayout(logo_layout)
         container_layout.addWidget(titulo)
         container_layout.addWidget(subtitulo)
         container_layout.addWidget(btn_padres)
         container_layout.addWidget(btn_admin)
+
 
         main_layout.addWidget(container)
         self.setLayout(main_layout)
@@ -999,6 +1021,7 @@ class VentanaLoginPadres(QWidget):
         layout.setContentsMargins(50, 50, 50, 50)
         layout.setSpacing(0)
 
+
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 32px;")
@@ -1010,6 +1033,7 @@ class VentanaLoginPadres(QWidget):
         header_layout.addStretch()
         layout.addLayout(header_layout)
         layout.addSpacing(30)
+
 
         titulo = QLabel("Iniciar Sesión")
         titulo.setObjectName("titulo")
@@ -1023,6 +1047,7 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(subtitulo)
         layout.addSpacing(30)
 
+
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
 
@@ -1033,11 +1058,13 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(self.txt_usuario)
         layout.addWidget(self.txt_contra)
 
+
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
         layout.addWidget(btn_ingresar)
 
         layout.addSpacing(20)
+
 
         btn_registrar = QPushButton("Crear cuenta nueva")
         btn_registrar.setObjectName("secundario")
@@ -1156,6 +1183,7 @@ class VentanaLoginAdmin(QWidget):
         layout.setContentsMargins(50, 50, 50, 50)
         layout.setSpacing(0)
 
+
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 32px;")
@@ -1167,6 +1195,7 @@ class VentanaLoginAdmin(QWidget):
         header_layout.addStretch()
         layout.addLayout(header_layout)
         layout.addSpacing(30)
+
 
         titulo = QLabel("Iniciar Sesión")
         titulo.setObjectName("titulo")
@@ -1180,6 +1209,7 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(subtitulo)
         layout.addSpacing(30)
 
+
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
 
@@ -1190,11 +1220,13 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(self.txt_usuario)
         layout.addWidget(self.txt_contra)
 
+
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
         layout.addWidget(btn_ingresar)
 
         layout.addSpacing(20)
+
 
         btn_registrar = QPushButton("Crear cuenta nueva")
         btn_registrar.setObjectName("secundario")
@@ -1202,6 +1234,7 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(btn_registrar)
 
         layout.addSpacing(30)
+
 
         btn_volver = QPushButton("← Volver al Inicio")
         btn_volver.setStyleSheet("""
@@ -1332,6 +1365,7 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.setContentsMargins(40, 40, 40, 40)
         layout_principal.setSpacing(0)
 
+
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 40px;")
@@ -1343,6 +1377,7 @@ class VentanaRegistroModerno(QWidget):
         header_layout.addStretch()
         layout_principal.addLayout(header_layout)
         layout_principal.addSpacing(20)
+
 
         titulo = QLabel("Crear Cuenta")
         titulo.setObjectName("titulo")
@@ -1356,6 +1391,7 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addWidget(titulo)
         layout_principal.addWidget(subtitulo)
         layout_principal.addSpacing(20)
+
 
         form_layout = QFormLayout()
         form_layout.setSpacing(15)
@@ -1402,12 +1438,15 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addLayout(form_layout)
         layout_principal.addSpacing(20)
 
+
         self.check_terminos = QCheckBox("Acepto los términos y condiciones y la política de privacidad")
         layout_principal.addWidget(self.check_terminos)
+
 
         self.btn_registrar = QPushButton("Crear Cuenta")
         self.btn_registrar.clicked.connect(self._registrar_usuario)
         layout_principal.addWidget(self.btn_registrar)
+
 
         layout_login = QHBoxLayout()
         lbl_tiene_cuenta = QLabel("¿Ya tienes una cuenta?")
@@ -1438,6 +1477,7 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addStretch()
 
         self.setLayout(layout_principal)
+
 
         self.txt_contrasena.textChanged.connect(self._validar_contraseña)
         self.txt_confirmar.textChanged.connect(self._validar_contraseña)
@@ -1535,7 +1575,6 @@ class VentanaRegistroModerno(QWidget):
             self.ventana_login = VentanaLoginAdmin()
         self.ventana_login.showMaximized()
 
-
 class VentanaPadres(QWidget):
     def __init__(self, bd, id_usuario):
         super().__init__()
@@ -1551,6 +1590,7 @@ class VentanaPadres(QWidget):
         main_layout = QHBoxLayout()
         self.setLayout(main_layout)
 
+
         panel_botones = QWidget()
         panel_botones.setFixedWidth(250)
         panel_botones.setStyleSheet("""
@@ -1564,6 +1604,7 @@ class VentanaPadres(QWidget):
         layout_botones = QVBoxLayout(panel_botones)
         layout_botones.setContentsMargins(10, 20, 10, 20)
         layout_botones.setSpacing(10)
+
 
         usuario_info = self.bd.consultar("SELECT nombre FROM Usuario WHERE id_usuario=?", (self.id_usuario,))
         nombre_usuario = usuario_info[0][0] if usuario_info else "Usuario"
@@ -1582,6 +1623,7 @@ class VentanaPadres(QWidget):
         """)
         lbl_usuario.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_botones.addWidget(lbl_usuario)
+
 
         botones_menu = [
             ("📚 Ver Catálogo", self.mostrar_catalogo),
@@ -1613,6 +1655,7 @@ class VentanaPadres(QWidget):
 
         layout_botones.addStretch()
 
+
         self.panel_contenido = QScrollArea()
         self.panel_contenido.setWidgetResizable(True)
         self.panel_contenido.setStyleSheet("QScrollArea { border: none; background-color: #F8FAFC; }")
@@ -1620,6 +1663,7 @@ class VentanaPadres(QWidget):
         self.contenido_widget = QWidget()
         self.contenido_layout = QVBoxLayout(self.contenido_widget)
         self.panel_contenido.setWidget(self.contenido_widget)
+
 
         self.mostrar_bienvenida()
 
@@ -1678,6 +1722,7 @@ class VentanaPadres(QWidget):
         header_layout.addWidget(self.txt_buscar)
 
         self.contenido_layout.addWidget(header)
+
 
         self.scroll_productos = QScrollArea()
         self.scroll_productos.setWidgetResizable(True)
@@ -1750,6 +1795,7 @@ class VentanaPadres(QWidget):
         layout.setSpacing(15)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+
         imagen_container = QWidget()
         imagen_container.setFixedSize(200, 200)
         imagen_layout = QVBoxLayout(imagen_container)
@@ -1802,6 +1848,7 @@ class VentanaPadres(QWidget):
 
         imagen_layout.addWidget(lbl_imagen)
 
+
         lbl_nombre = QLabel(nombre)
         lbl_nombre.setStyleSheet("""
             font-size: 16px; 
@@ -1832,6 +1879,7 @@ class VentanaPadres(QWidget):
         """)
         lbl_precio.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+
         if stock == 0:
             stock_text = "❌ Agotado"
             stock_style = "color: #EF4444; font-weight: bold;"
@@ -1845,6 +1893,7 @@ class VentanaPadres(QWidget):
         lbl_stock = QLabel(stock_text)
         lbl_stock.setStyleSheet(f"font-size: 12px; {stock_style}")
         lbl_stock.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
 
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
@@ -2005,6 +2054,7 @@ class VentanaPadres(QWidget):
     def agregar_al_carrito(self, producto):
         id_producto, nombre, categoria, precio, stock, imagen_blob, tipo_imagen = producto
 
+
         cantidad, ok = QInputDialog.getInt(
             self,
             "Agregar al carrito",
@@ -2038,6 +2088,7 @@ class VentanaPadres(QWidget):
             lbl_vacio.setStyleSheet("font-size: 18px; color: #64748B; text-align: center; margin: 50px;")
             self.contenido_layout.addWidget(lbl_vacio)
 
+
             btn_catalogo = QPushButton("📚 Ir al Catálogo")
             btn_catalogo.setStyleSheet("""
                 QPushButton {
@@ -2058,6 +2109,7 @@ class VentanaPadres(QWidget):
 
             return
 
+
         tabla_carrito = QTableWidget()
         tabla_carrito.setColumnCount(5)
         tabla_carrito.setHorizontalHeaderLabels(["Producto", "Precio Unitario", "Cantidad", "Subtotal", "Acciones"])
@@ -2074,6 +2126,7 @@ class VentanaPadres(QWidget):
             tabla_carrito.setItem(i, 1, QTableWidgetItem(f"Q{precio:.2f}"))
             tabla_carrito.setItem(i, 2, QTableWidgetItem(str(cantidad)))
             tabla_carrito.setItem(i, 3, QTableWidgetItem(f"Q{subtotal:.2f}"))
+
 
             widget_acciones = QWidget()
             layout_acciones = QHBoxLayout(widget_acciones)
@@ -2098,6 +2151,7 @@ class VentanaPadres(QWidget):
             layout_acciones.addWidget(btn_eliminar)
             tabla_carrito.setCellWidget(i, 4, widget_acciones)
 
+
         tabla_carrito.setStyleSheet("""
             QTableWidget {
                 background-color: white;
@@ -2121,6 +2175,7 @@ class VentanaPadres(QWidget):
         tabla_carrito.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
         self.contenido_layout.addWidget(tabla_carrito)
+
 
         total_layout = QHBoxLayout()
 
@@ -2204,6 +2259,7 @@ class VentanaPadres(QWidget):
             QMessageBox.warning(self, "Carrito vacío", "No hay productos en el carrito.")
             return
 
+
         total = sum(producto[3] * cantidad for producto, cantidad in self.carrito_compras)
 
         respuesta = QMessageBox.question(
@@ -2224,13 +2280,16 @@ class VentanaPadres(QWidget):
                 )
                 id_venta = self.bd.cursor.lastrowid
 
+
                 for producto, cantidad in self.carrito_compras:
                     id_producto, nombre, categoria, precio, stock, imagen_blob, tipo_imagen = producto
+
 
                     self.bd.ejecutar(
                         "INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
                         (id_venta, id_producto, cantidad, precio, precio * cantidad)
                     )
+
 
                     self.bd.ejecutar(
                         "UPDATE Producto SET stock = stock - ? WHERE id_producto = ?",
@@ -2258,6 +2317,7 @@ class VentanaPadres(QWidget):
         titulo = QLabel("📋 Listas de Útiles Predefinidas")
         titulo.setStyleSheet("font-size: 28px; font-weight: bold; color: #1E293B; margin-bottom: 20px;")
         self.contenido_layout.addWidget(titulo)
+
 
         listas_data = [
             ("1°-3° Primaria", 185.00,
@@ -2338,6 +2398,7 @@ class VentanaPadres(QWidget):
     def ver_detalle_producto(self, producto):
         id_producto, nombre, categoria, precio, stock, imagen_blob, tipo_imagen = producto
 
+
         detalle_window = QDialog(self)  # Cambiar a QDialog
         detalle_window.setWindowTitle(f"Detalles - {nombre}")
         detalle_window.resize(400, 500)
@@ -2395,6 +2456,7 @@ class VentanaPadres(QWidget):
                 }
             """)
 
+
         lbl_nombre = QLabel(nombre)
         lbl_nombre.setStyleSheet("font-size: 24px; font-weight: bold; color: #1E293B;")
         lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -2426,6 +2488,7 @@ class VentanaPadres(QWidget):
             }
         """)
         btn_cerrar.clicked.connect(detalle_window.accept)
+
 
         layout.addWidget(lbl_imagen_grande, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lbl_nombre)
@@ -2475,6 +2538,7 @@ class VentanaAdmin(QWidget):
     def _construir_ui(self):
         main_layout = QVBoxLayout(self)
 
+
         titulo = QLabel("Panel de administración")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         titulo.setStyleSheet("font-size: 26px; font-weight: bold; margin: 20px;")
@@ -2483,12 +2547,15 @@ class VentanaAdmin(QWidget):
         h_layout = QHBoxLayout()
         main_layout.addLayout(h_layout)
 
+
         v_botones = QVBoxLayout()
         v_botones.setSpacing(10)
         h_layout.addLayout(v_botones, 1)
 
+
         self.stacked_layout = QStackedLayout()
         h_layout.addLayout(self.stacked_layout, 3)
+
 
         self.pantallas = {
             "categoria": PantallaAgregarCategoria(self.bd),
@@ -2505,6 +2572,7 @@ class VentanaAdmin(QWidget):
 
         for w in self.pantallas.values():
             self.stacked_layout.addWidget(w)
+
 
         botones = [
             ("📁 Agregar categoría", lambda: self._cambiar_pantalla("categoria")),
@@ -2543,6 +2611,7 @@ class VentanaAdmin(QWidget):
             v_botones.addWidget(btn)
         v_botones.addStretch()
 
+
         lbl_inicio = QLabel("Selecciona una opción del menú lateral")
         lbl_inicio.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_inicio.setStyleSheet("font-size: 18px; color: #64748B;")
@@ -2567,6 +2636,7 @@ class VentanaAdmin(QWidget):
             else:
                 id_categoria = categorias[0][0]
 
+
             productos_ejemplo = [
                 (id_categoria, "Cuaderno cuadriculado 100 hojas", 25.50, 50, 10),
                 (id_categoria, "Lápices HB paquete x12", 15.00, 100, 20),
@@ -2584,6 +2654,7 @@ class VentanaAdmin(QWidget):
                 (id_categoria, "Transportador 180°", 7.50, 80, 15),
                 (id_categoria, "Block de hojas blancas", 30.00, 35, 8)
             ]
+
 
             productos_agregados = 0
 
@@ -2654,6 +2725,7 @@ class PantallaAgregarProducto(QWidget):
         v = QVBoxLayout()
         v.setSpacing(15)
 
+
         self.txt_id_categoria = QLineEdit()
         self.txt_id_categoria.setPlaceholderText("ID categoría")
 
@@ -2668,6 +2740,7 @@ class PantallaAgregarProducto(QWidget):
 
         self.txt_limite = QLineEdit()
         self.txt_limite.setPlaceholderText("Límite stock (opcional)")
+
 
         lbl_imagen = QLabel("Imagen del producto:")
         lbl_imagen.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -2687,6 +2760,7 @@ class PantallaAgregarProducto(QWidget):
             }
         """)
         self.btn_seleccionar_imagen.clicked.connect(self._seleccionar_imagen)
+
 
         preview_container = QWidget()
         preview_layout = QVBoxLayout(preview_container)
@@ -2730,6 +2804,7 @@ class PantallaAgregarProducto(QWidget):
             }
         """)
         btn_agregar.clicked.connect(self._agregar_producto)
+
 
         widgets = [
             self.txt_id_categoria,
@@ -2829,7 +2904,6 @@ class PantallaAgregarProducto(QWidget):
         self.lbl_vista_previa.setText("Vista previa\n(200x200 px)")
         self.lbl_info_imagen.setText("No se ha seleccionado imagen")
         self.lbl_info_imagen.setStyleSheet("color: #64748B; font-size: 12px; text-align: center;")
-
 
 class PantallaAgregarCliente(QWidget):
     def __init__(self, bd):
@@ -2954,11 +3028,14 @@ class PantallaGestionImagenes(QWidget):
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
 
+
         titulo = QLabel("🖼️ Gestionar Imágenes de Productos")
         titulo.setStyleSheet("font-size: 24px; font-weight: bold; color: #1E293B; margin-bottom: 20px;")
         layout.addWidget(titulo)
 
+
         split_layout = QHBoxLayout()
+
 
         panel_izquierdo = QWidget()
         panel_izquierdo.setFixedWidth(400)
@@ -2968,10 +3045,12 @@ class PantallaGestionImagenes(QWidget):
         lbl_lista.setStyleSheet("font-weight: bold; font-size: 16px; margin-bottom: 10px;")
         layout_izquierdo.addWidget(lbl_lista)
 
+
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("🔍 Buscar producto...")
         self.txt_buscar.textChanged.connect(self.filtrar_productos)
         layout_izquierdo.addWidget(self.txt_buscar)
+
 
         self.lista_productos = QListWidget()
         self.lista_productos.setStyleSheet("""
@@ -2995,13 +3074,16 @@ class PantallaGestionImagenes(QWidget):
         self.lista_productos.itemClicked.connect(self.seleccionar_producto)
         layout_izquierdo.addWidget(self.lista_productos)
 
+
         panel_derecho = QWidget()
         layout_derecho = QVBoxLayout(panel_derecho)
+
 
         self.lbl_info_producto = QLabel("Selecciona un producto de la lista")
         self.lbl_info_producto.setStyleSheet("font-size: 16px; color: #64748B; margin-bottom: 20px;")
         self.lbl_info_producto.setWordWrap(True)
         layout_derecho.addWidget(self.lbl_info_producto)
+
 
         lbl_vista_previa = QLabel("Imagen Actual:")
         lbl_vista_previa.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -3020,6 +3102,7 @@ class PantallaGestionImagenes(QWidget):
         """)
         self.lbl_imagen_actual.setText("Sin imagen")
         layout_derecho.addWidget(self.lbl_imagen_actual, alignment=Qt.AlignmentFlag.AlignCenter)
+
 
         btn_seleccionar_imagen = QPushButton("📁 Seleccionar Nueva Imagen")
         btn_seleccionar_imagen.setStyleSheet("""
@@ -3080,6 +3163,7 @@ class PantallaGestionImagenes(QWidget):
 
         layout_derecho.addStretch()
 
+
         split_layout.addWidget(panel_izquierdo)
         split_layout.addWidget(panel_derecho)
         layout.addLayout(split_layout)
@@ -3122,7 +3206,9 @@ class PantallaGestionImagenes(QWidget):
 
         id_producto, nombre, precio, stock, imagen_blob = producto
 
+
         self.lbl_info_producto.setText(f"📦 {nombre}\n💰 Precio: Q{precio:.2f}\n📊 Stock: {stock}")
+
 
         if imagen_blob:
             pixmap = ManejadorImagenes.blob_a_imagen(imagen_blob, None)
@@ -3184,6 +3270,7 @@ class PantallaGestionImagenes(QWidget):
 
             QMessageBox.information(self, "Éxito", f"Imagen actualizada para el producto: {nombre_producto}")
 
+
             self.datos_imagen_actual = None
             self.tipo_imagen_actual = None
             self.ruta_imagen_actual = None
@@ -3232,17 +3319,21 @@ class PantallaSolicitudesPadres(QWidget):
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
 
+
         titulo = QLabel("📝 Solicitudes de Padres de Familia")
         titulo.setStyleSheet("font-size: 24px; font-weight: bold; color: #1E293B; margin-bottom: 20px;")
         layout.addWidget(titulo)
+
 
         descripcion = QLabel("Lista de útiles solicitados por los padres de familia:")
         descripcion.setStyleSheet("font-size: 16px; color: #64748B; margin-bottom: 20px;")
         layout.addWidget(descripcion)
 
+
         self.tabla_solicitudes = QTableWidget()
         self.tabla_solicitudes.setColumnCount(4)
         self.tabla_solicitudes.setHorizontalHeaderLabels(["👤 Padre", "📞 Teléfono", "📋 Lista de Útiles", "📅 Fecha"])
+
 
         self.tabla_solicitudes.setStyleSheet("""
             QTableWidget {
@@ -3267,6 +3358,7 @@ class PantallaSolicitudesPadres(QWidget):
         self.tabla_solicitudes.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
         layout.addWidget(self.tabla_solicitudes)
+
 
         btn_actualizar = QPushButton("🔄 Actualizar Lista")
         btn_actualizar.setStyleSheet("""
@@ -3311,7 +3403,6 @@ class PantallaSolicitudesPadres(QWidget):
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudieron cargar las solicitudes: {str(e)}")
-
 
 class VentanaCrearLista(QWidget):
     def __init__(self, bd):
@@ -3554,6 +3645,7 @@ class VentanaDetalleProducto(QWidget):
 
         id_producto, nombre, stock, precio, imagen_blob, tipo_imagen = self.producto
 
+
         lbl_imagen_grande = QLabel()
         lbl_imagen_grande.setFixedSize(200, 200)
         lbl_imagen_grande.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -3569,11 +3661,13 @@ class VentanaDetalleProducto(QWidget):
         else:
             lbl_imagen_grande.setPixmap(ManejadorImagenes.obtener_imagen_predeterminada())
 
+
         lbl_nombre = QLabel(f"<h2>{nombre}</h2>")
         lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_precio = QLabel(f"<b>Precio:</b> Q{precio:.2f}")
         lbl_stock = QLabel(f"<b>Stock disponible:</b> {stock}")
+
 
         layout_cantidad = QHBoxLayout()
         lbl_cantidad = QLabel("Cantidad:")
@@ -3584,6 +3678,7 @@ class VentanaDetalleProducto(QWidget):
         layout_cantidad.addWidget(lbl_cantidad)
         layout_cantidad.addWidget(self.spin_cantidad)
         layout_cantidad.addStretch()
+
 
         layout_botones = QHBoxLayout()
         btn_comprar = QPushButton("Comprar Ahora")
@@ -3601,11 +3696,14 @@ class VentanaDetalleProducto(QWidget):
         layout_botones.addWidget(btn_carrito)
         layout_botones.addWidget(btn_cancelar)
 
+
         self.lbl_total = QLabel(f"<h3>Total: Q{precio:.2f}</h3>")
         self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_total.setStyleSheet("color: #e74c3c; font-weight: bold;")
 
+
         self.spin_cantidad.valueChanged.connect(self._actualizar_total)
+
 
         layout.addWidget(lbl_imagen_grande)
         layout.addWidget(lbl_nombre)
@@ -3629,10 +3727,12 @@ class VentanaDetalleProducto(QWidget):
         id_producto, nombre, stock, precio, _, _ = self.producto
         cantidad = self.spin_cantidad.value()
 
+
         if cantidad > stock:
             QMessageBox.warning(self, "Stock insuficiente",
                                 f"No hay suficiente stock. Disponible: {stock}")
             return
+
 
         total = precio * cantidad
         respuesta = QMessageBox.question(
@@ -3649,21 +3749,25 @@ class VentanaDetalleProducto(QWidget):
 
                 fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+
                 self.bd.ejecutar(
                     "INSERT INTO Venta (id_cliente, fecha, total, id_empleado) VALUES (?, ?, ?, ?)",
                     (self.id_usuario, fecha, total, 1)
                 )
                 id_venta = self.bd.cursor.lastrowid
 
+
                 self.bd.ejecutar(
                     "INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
                     (id_venta, id_producto, cantidad, precio, total)
                 )
 
+
                 self.bd.ejecutar(
                     "UPDATE Producto SET stock = stock - ? WHERE id_producto = ?",
                     (cantidad, id_producto)
                 )
+
 
                 try:
                     self.bd.ejecutar(
@@ -3768,6 +3872,7 @@ class PantallaNuevaCompra(QWidget):
         self.txt_id_proveedor.setPlaceholderText("ID Proveedor")
         layout.addWidget(self.txt_id_proveedor)
 
+
         h = QHBoxLayout()
         self.txt_id_producto = QLineEdit();
         self.txt_id_producto.setPlaceholderText("ID Producto")
@@ -3780,8 +3885,10 @@ class PantallaNuevaCompra(QWidget):
         for w in [self.txt_id_producto, self.txt_cantidad, self.txt_precio, btn_agregar]: h.addWidget(w)
         layout.addLayout(h)
 
+
         self.lbl_productos = QLabel("Productos agregados:\n")
         layout.addWidget(self.lbl_productos)
+
 
         btn_final = QPushButton("Finalizar compra")
         btn_final.clicked.connect(self._finalizar_compra)
@@ -3885,6 +3992,7 @@ if __name__ == "__main__":
             background-color: #2563EB;
         }
     """)
+
 
     ventana_inicio = VentanaInicio()
     ventana_inicio.show()
