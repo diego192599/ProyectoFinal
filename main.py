@@ -1,6 +1,5 @@
-import sys
+
 import os
-import sys
 import sys
 import sqlite3
 from datetime import datetime
@@ -865,8 +864,10 @@ class GestionUsuario:
 class VentanaTipoUsuario(QWidget):
     def __init__(self):
         super().__init__()
+        self.padres = None
+        self.admin = None
         self.setWindowTitle("Selecciona tipo de usuario")
-        self.showMaximized()  # Pantalla completa
+        self.showMaximized()
         self._aplicar_estilos()
         self._construir_ui()
 
@@ -948,21 +949,34 @@ class VentanaTipoUsuario(QWidget):
 
     def _abrir_padres(self):
         self.hide()
-        self.padres = VentanaLoginPadres()
+        if self.padres is None:
+            self.padres = VentanaLoginPadres()
         self.padres.showMaximized()
 
     def _abrir_admin(self):
         self.hide()
-        self.admin = VentanaLoginAdmin()
+        if self.admin is None:
+            self.admin = VentanaLoginAdmin()
         self.admin.showMaximized()
+
+    def closeEvent(self, event):
+        """Maneja el cierre de la ventana"""
+        if self.padres:
+            self.padres.close()
+        if self.admin:
+            self.admin.close()
+        event.accept()
 
 
 class VentanaLoginAdmin(QWidget):
     def __init__(self):
         super().__init__()
         self.bd = ConexionBD(DB_FILE)
+        self.registro = None
+        self.admin_principal = None
+        self.tipo_usuario = None
         self.setWindowTitle("Iniciar Sesión - Admin/Empleado")
-        self.showMaximized()  # Pantalla completa
+        self.showMaximized()
         self._aplicar_estilos_login()
         self._construir_ui_login()
 
@@ -1021,7 +1035,7 @@ class VentanaLoginAdmin(QWidget):
         layout.setContentsMargins(50, 50, 50, 50)
         layout.setSpacing(0)
 
-
+        # Header
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 32px;")
@@ -1034,7 +1048,7 @@ class VentanaLoginAdmin(QWidget):
         layout.addLayout(header_layout)
         layout.addSpacing(30)
 
-
+        # Título
         titulo = QLabel("Iniciar Sesión")
         titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1047,7 +1061,7 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(subtitulo)
         layout.addSpacing(30)
 
-
+        # Campos de entrada
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
 
@@ -1058,14 +1072,14 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(self.txt_usuario)
         layout.addWidget(self.txt_contra)
 
-
+        # Botón ingresar
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
         layout.addWidget(btn_ingresar)
 
         layout.addSpacing(20)
 
-
+        # Botón registrar
         btn_registrar = QPushButton("Crear cuenta nueva")
         btn_registrar.setObjectName("secundario")
         btn_registrar.clicked.connect(self._abrir_registro_moderno)
@@ -1073,7 +1087,7 @@ class VentanaLoginAdmin(QWidget):
 
         layout.addSpacing(30)
 
-
+        # Botón volver
         btn_volver = QPushButton("← Volver al Inicio")
         btn_volver.setStyleSheet("""
             QPushButton {
@@ -1091,104 +1105,62 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(btn_volver)
 
         layout.addStretch()
-
         self.setLayout(layout)
 
     def _abrir_registro_moderno(self):
-
         self.hide()
         self.registro = VentanaRegistroModerno(tipo_usuario="admin", bd=self.bd)
         self.registro.show()
 
     def _login(self):
+        # Validar conexión a BD
+        if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
+            QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
+            return
+
         usuario = self.txt_usuario.text().strip()
         contra = self.txt_contra.text().strip()
-        filas = self.bd.consultar(
-            "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='admin'",
-            (usuario, contra)
-        )
-        if filas:
-            QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
-            self.hide()
-            self.admin_principal = VentanaAdmin(self.bd)
-            self.admin_principal.show()
-        else:
-            QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
 
-    def _volver(self):
-        self.close()
-        self.tipo_usuario = VentanaTipoUsuario()
-        self.tipo_usuario.show()
+        if not usuario or not contra:
+            QMessageBox.warning(self, "Error", "Por favor ingresa usuario y contraseña")
+            return
 
-class VentanaLoginPadres(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.bd = ConexionBD(DB_FILE)
-        self.setWindowTitle("Login - Padres")
-        self.resize(400, 250)
-        self._construir_ui()
-
-    def _construir_ui(self):
-        v = QVBoxLayout()
-        lbl = QLabel("Iniciar sesión - Padres")
-        lbl.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.txt_usuario = QLineEdit()
-        self.txt_usuario.setPlaceholderText("Usuario")
-        self.txt_contra = QLineEdit()
-        self.txt_contra.setPlaceholderText("Contraseña")
-        self.txt_contra.setEchoMode(QLineEdit.EchoMode.Password)
-
-        btn_ingresar = QPushButton("Ingresar")
-        btn_ingresar.clicked.connect(self._login)
-
-        btn_registrar = QPushButton("Registrarse")
-        btn_registrar.clicked.connect(self._abrir_registro)
-
-        btn_volver = QPushButton("Volver")
-        btn_volver.clicked.connect(self._volver)
-
-        v.addWidget(lbl)
-        v.addWidget(self.txt_usuario)
-        v.addWidget(self.txt_contra)
-        v.addWidget(btn_ingresar)
-        v.addWidget(btn_registrar)
-        v.addWidget(btn_volver)
-        self.setLayout(v)
-
-    def _login(self):
-        usuario = self.txt_usuario.text().strip()
-        contra = self.txt_contra.text().strip()
-        filas = self.bd.consultar(
-            "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='padre'",
-            (usuario, contra)
-        )
-        if filas:
-            QMessageBox.information(self, "Bienvenido", f"Hola {filas[0][1]}!")
-            self.hide()
-            self.padres_principal = VentanaPadres(self.bd, filas[0][0])
-            self.padres_principal.show()
-        else:
-            QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
-
-    def _abrir_registro(self):
-        self.hide()
-        self.registro = VentanaRegistroModerno(tipo_usuario="padre", bd=self.bd)  # Usar el nuevo registro
-        self.registro.show()
+        try:
+            filas = self.bd.consultar(
+                "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='admin'",
+                (usuario, contra)
+            )
+            if filas:
+                QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
+                self.hide()
+                self.admin_principal = VentanaAdmin(self.bd)
+                self.admin_principal.show()
+            else:
+                QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al consultar la base de datos: {str(e)}")
 
     def _volver(self):
         self.close()
         self.tipo_usuario = VentanaTipoUsuario()
         self.tipo_usuario.showMaximized()
 
+    def closeEvent(self, event):
+        """Maneja el cierre de la ventana"""
+        if self.bd:
+            self.bd.cerrar()
+        event.accept()
+
 
 class VentanaLoginPadres(QWidget):
     def __init__(self):
         super().__init__()
         self.bd = ConexionBD(DB_FILE)
+        self.registro = None
+        self.padres_principal = None
+        self.tipo_usuario = None
         self.setWindowTitle("Iniciar Sesión - Padres")
-        self.showMaximized()  # Pantalla completa
+        self.showMaximized()
         self._aplicar_estilos_login()
         self._construir_ui_login()
 
@@ -1273,7 +1245,7 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(subtitulo)
         layout.addSpacing(30)
 
-
+        # Campos de entrada
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
 
@@ -1284,14 +1256,14 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(self.txt_usuario)
         layout.addWidget(self.txt_contra)
 
-
+        # Botón ingresar
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
         layout.addWidget(btn_ingresar)
 
         layout.addSpacing(20)
 
-
+        # Botón registrar
         btn_registrar = QPushButton("Crear cuenta nueva")
         btn_registrar.setObjectName("secundario")
         btn_registrar.clicked.connect(self._abrir_registro_moderno)
@@ -1299,7 +1271,7 @@ class VentanaLoginPadres(QWidget):
 
         layout.addSpacing(30)
 
-
+        # Botón volver
         btn_volver = QPushButton("← Volver al Inicio")
         btn_volver.setStyleSheet("""
             QPushButton {
@@ -1317,7 +1289,6 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(btn_volver)
 
         layout.addStretch()
-
         self.setLayout(layout)
 
     def _abrir_registro_moderno(self):
@@ -1326,36 +1297,56 @@ class VentanaLoginPadres(QWidget):
         self.registro.show()
 
     def _login(self):
+        # Validar conexión a BD
+        if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
+            QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
+            return
+
         usuario = self.txt_usuario.text().strip()
         contra = self.txt_contra.text().strip()
-        filas = self.bd.consultar(
-            "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='padre'",
-            (usuario, contra)
-        )
-        if filas:
-            QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
-            self.hide()
-            self.padres_principal = VentanaPadres(self.bd, filas[0][0])
-            self.padres_principal.show()
-        else:
-            QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+
+        if not usuario or not contra:
+            QMessageBox.warning(self, "Error", "Por favor ingresa usuario y contraseña")
+            return
+
+        try:
+            filas = self.bd.consultar(
+                "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='padre'",
+                (usuario, contra)
+            )
+            if filas:
+                QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
+                self.hide()
+                self.padres_principal = VentanaPadres(self.bd, filas[0][0])
+                self.padres_principal.show()
+            else:
+                QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al consultar la base de datos: {str(e)}")
 
     def _volver(self):
         self.close()
         self.tipo_usuario = VentanaTipoUsuario()
         self.tipo_usuario.showMaximized()
 
+    def closeEvent(self, event):
+        """Maneja el cierre de la ventana"""
+        if self.bd:
+            self.bd.cerrar()
+        event.accept()
+
+
 class VentanaRegistroModerno(QWidget):
-    class VentanaRegistroModerno(QWidget):
-        def __init__(self, tipo_usuario="padre", bd=None):
-            super().__init__()
-            self.tipo_usuario = tipo_usuario
-            self.bd = bd if bd else ConexionBD(DB_FILE)
-            self.setWindowTitle(
-                f"Registro - {'Padres de Familia' if tipo_usuario == 'padre' else 'Administrador/Empleado'}")
-            self.showMaximized()
-            self._aplicar_estilos()
-            self._construir_ui()
+    def __init__(self, tipo_usuario="padre", bd=None):
+        super().__init__()
+        self.tipo_usuario = tipo_usuario
+        self.bd = bd if bd else ConexionBD(DB_FILE)
+        self.ventana_login = None
+        self.setWindowTitle(
+            f"Registro - {'Padres de Familia' if tipo_usuario == 'padre' else 'Administrador/Empleado'}")
+        self.showMaximized()
+        self._aplicar_estilos()
+        self._construir_ui()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
@@ -1429,7 +1420,7 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.setContentsMargins(40, 40, 40, 40)
         layout_principal.setSpacing(0)
 
-
+        # Header
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 40px;")
@@ -1441,7 +1432,7 @@ class VentanaRegistroModerno(QWidget):
         header_layout.addStretch()
         layout_principal.addLayout(header_layout)
 
-
+        # Títulos
         titulo = QLabel("Crear Cuenta")
         titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1455,6 +1446,7 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addWidget(subtitulo)
         layout_principal.addSpacing(20)
 
+        # Formulario
         form_layout = QFormLayout()
         form_layout.setSpacing(15)
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
@@ -1465,13 +1457,11 @@ class VentanaRegistroModerno(QWidget):
         self.txt_nombre.setPlaceholderText("Ingresa tu nombre completo")
         form_layout.addRow(lbl_nombre, self.txt_nombre)
 
-
         lbl_usuario = QLabel("Usuario:")
         lbl_usuario.setStyleSheet("font-weight: bold; color: #374151;")
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Elige un nombre de usuario")
         form_layout.addRow(lbl_usuario, self.txt_usuario)
-
 
         lbl_correo = QLabel("Correo electrónico:")
         lbl_correo.setStyleSheet("font-weight: bold; color: #374151;")
@@ -1479,13 +1469,11 @@ class VentanaRegistroModerno(QWidget):
         self.txt_correo.setPlaceholderText("tu@email.com")
         form_layout.addRow(lbl_correo, self.txt_correo)
 
-
         lbl_telefono = QLabel("Teléfono:")
         lbl_telefono.setStyleSheet("font-weight: bold; color: #374151;")
         self.txt_telefono = QLineEdit()
         self.txt_telefono.setPlaceholderText("+502 1234-5678")
         form_layout.addRow(lbl_telefono, self.txt_telefono)
-
 
         lbl_contrasena = QLabel("Contraseña:")
         lbl_contrasena.setStyleSheet("font-weight: bold; color: #374151;")
@@ -1493,7 +1481,6 @@ class VentanaRegistroModerno(QWidget):
         self.txt_contrasena.setPlaceholderText("Mínimo 8 caracteres")
         self.txt_contrasena.setEchoMode(QLineEdit.EchoMode.Password)
         form_layout.addRow(lbl_contrasena, self.txt_contrasena)
-
 
         lbl_confirmar = QLabel("Confirmar contraseña:")
         lbl_confirmar.setStyleSheet("font-weight: bold; color: #374151;")
@@ -1505,16 +1492,16 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addLayout(form_layout)
         layout_principal.addSpacing(20)
 
-
+        # Checkbox términos
         self.check_terminos = QCheckBox("Acepto los términos y condiciones y la política de privacidad")
         layout_principal.addWidget(self.check_terminos)
 
-
+        # Botón registrar
         self.btn_registrar = QPushButton("Crear Cuenta")
         self.btn_registrar.clicked.connect(self._registrar_usuario)
         layout_principal.addWidget(self.btn_registrar)
 
-
+        # Enlace a login
         layout_login = QHBoxLayout()
         lbl_tiene_cuenta = QLabel("¿Ya tienes una cuenta?")
         lbl_tiene_cuenta.setStyleSheet("color: #64748B;")
@@ -1545,13 +1532,12 @@ class VentanaRegistroModerno(QWidget):
 
         self.setLayout(layout_principal)
 
-
+        # Conectar validaciones
         self.txt_contrasena.textChanged.connect(self._validar_contraseña)
         self.txt_confirmar.textChanged.connect(self._validar_contraseña)
         self.txt_usuario.textChanged.connect(self._validar_usuario)
 
     def _validar_contraseña(self):
-
         contrasena = self.txt_contrasena.text()
         confirmar = self.txt_confirmar.text()
 
@@ -1572,6 +1558,10 @@ class VentanaRegistroModerno(QWidget):
             self.txt_usuario.setStyleSheet(self.txt_usuario.styleSheet())
 
     def _registrar_usuario(self):
+        # Validar conexión a BD
+        if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
+            QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
+            return
 
         nombre = self.txt_nombre.text().strip()
         usuario = self.txt_usuario.text().strip()
@@ -1580,7 +1570,7 @@ class VentanaRegistroModerno(QWidget):
         contrasena = self.txt_contrasena.text()
         confirmar = self.txt_confirmar.text()
 
-
+        # Validaciones
         errores = []
 
         if not nombre:
@@ -1605,21 +1595,22 @@ class VentanaRegistroModerno(QWidget):
             QMessageBox.warning(self, "Error de validación", "\n".join(errores))
             return
 
-
+        # Registrar en BD
         try:
+            # Verificar si el usuario ya existe
             existente = self.bd.consultar("SELECT * FROM Usuario WHERE usuario=?", (usuario,))
             if existente:
                 QMessageBox.warning(self, "Usuario existente",
                                     "El nombre de usuario ya está en uso. Por favor elige otro.")
                 return
 
-
+            # Insertar usuario
             self.bd.ejecutar(
                 "INSERT INTO Usuario (nombre, usuario, contrasena, tipo) VALUES (?, ?, ?, ?)",
                 (nombre, usuario, contrasena, self.tipo_usuario)
             )
 
-
+            # Si es padre, crear también en tabla Cliente
             if self.tipo_usuario == "padre":
                 self.bd.ejecutar(
                     "INSERT INTO Cliente (nombre, telefono, correo, total_compras, descuento) VALUES (?, ?, ?, ?, ?)",
@@ -1641,13 +1632,18 @@ class VentanaRegistroModerno(QWidget):
             QMessageBox.critical(self, "Error", f"No se pudo completar el registro:\n{str(e)}")
 
     def _ir_a_login(self):
-
         self.close()
         if self.tipo_usuario == "padre":
             self.ventana_login = VentanaLoginPadres()
         else:
             self.ventana_login = VentanaLoginAdmin()
         self.ventana_login.show()
+
+    def closeEvent(self, event):
+        """Maneja el cierre de la ventana"""
+        if self.bd:
+            self.bd.cerrar()
+        event.accept()
 
 class VentanaPadres(QWidget):
     def __init__(self, bd, id_usuario):
