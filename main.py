@@ -906,7 +906,6 @@ class VentanaTipoUsuario(QWidget):
         container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         container_layout.setSpacing(30)
 
-        # Logo y título
         logo_layout = QHBoxLayout()
         logo_label = QLabel("📚")
         logo_label.setStyleSheet("font-size: 48px;")
@@ -917,33 +916,28 @@ class VentanaTipoUsuario(QWidget):
         logo_layout.addWidget(titulo_app)
         logo_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Título principal
         titulo = QLabel("Bienvenido a Librería ABC")
         titulo.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         titulo.setStyleSheet("color: #1E293B; margin-bottom: 20px;")
 
-        # Subtítulo
         subtitulo = QLabel("Selecciona tu tipo de usuario para continuar")
         subtitulo.setFont(QFont("Segoe UI", 14))
         subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitulo.setStyleSheet("color: #64748B; margin-bottom: 40px;")
 
-        # Botones de selección
         btn_padres = QPushButton("👨‍👩‍👧‍👦 Padres de Familia")
         btn_padres.clicked.connect(self._abrir_padres)
 
         btn_admin = QPushButton("👨‍💼 Administrador / Empleado")
         btn_admin.clicked.connect(self._abrir_admin)
 
-        # Agregar elementos al contenedor
         container_layout.addLayout(logo_layout)
         container_layout.addWidget(titulo)
         container_layout.addWidget(subtitulo)
         container_layout.addWidget(btn_padres)
         container_layout.addWidget(btn_admin)
 
-        # Agregar contenedor al layout principal
         main_layout.addWidget(container)
         self.setLayout(main_layout)
 
@@ -960,7 +954,6 @@ class VentanaTipoUsuario(QWidget):
         self.admin.showMaximized()
 
     def closeEvent(self, event):
-        """Maneja el cierre de la ventana"""
         if self.padres:
             self.padres.close()
         if self.admin:
@@ -1035,7 +1028,6 @@ class VentanaLoginAdmin(QWidget):
         layout.setContentsMargins(50, 50, 50, 50)
         layout.setSpacing(0)
 
-        # Header
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 32px;")
@@ -1048,7 +1040,6 @@ class VentanaLoginAdmin(QWidget):
         layout.addLayout(header_layout)
         layout.addSpacing(30)
 
-        # Título
         titulo = QLabel("Iniciar Sesión")
         titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1061,7 +1052,6 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(subtitulo)
         layout.addSpacing(30)
 
-        # Campos de entrada
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
 
@@ -1072,14 +1062,12 @@ class VentanaLoginAdmin(QWidget):
         layout.addWidget(self.txt_usuario)
         layout.addWidget(self.txt_contra)
 
-        # Botón ingresar
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
         layout.addWidget(btn_ingresar)
 
         layout.addSpacing(20)
 
-        # Botón registrar
         btn_registrar = QPushButton("Crear cuenta nueva")
         btn_registrar.setObjectName("secundario")
         btn_registrar.clicked.connect(self._abrir_registro_moderno)
@@ -1087,7 +1075,6 @@ class VentanaLoginAdmin(QWidget):
 
         layout.addSpacing(30)
 
-        # Botón volver
         btn_volver = QPushButton("← Volver al Inicio")
         btn_volver.setStyleSheet("""
             QPushButton {
@@ -1113,7 +1100,6 @@ class VentanaLoginAdmin(QWidget):
         self.registro.show()
 
     def _login(self):
-        # Validar conexión a BD
         if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
             QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
             return
@@ -1146,7 +1132,6 @@ class VentanaLoginAdmin(QWidget):
         self.tipo_usuario.showMaximized()
 
     def closeEvent(self, event):
-        """Maneja el cierre de la ventana"""
         if self.bd:
             self.bd.cerrar()
         event.accept()
@@ -1219,7 +1204,6 @@ class VentanaLoginPadres(QWidget):
         layout.setContentsMargins(50, 50, 50, 50)
         layout.setSpacing(0)
 
-        # Header
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 32px;")
@@ -1232,7 +1216,6 @@ class VentanaLoginPadres(QWidget):
         layout.addLayout(header_layout)
         layout.addSpacing(30)
 
-        # Título
         titulo = QLabel("Iniciar Sesión")
         titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1245,7 +1228,6 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(subtitulo)
         layout.addSpacing(30)
 
-        # Campos de entrada
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Usuario")
 
@@ -1256,14 +1238,12 @@ class VentanaLoginPadres(QWidget):
         layout.addWidget(self.txt_usuario)
         layout.addWidget(self.txt_contra)
 
-        # Botón ingresar
         btn_ingresar = QPushButton("Ingresar")
         btn_ingresar.clicked.connect(self._login)
         layout.addWidget(btn_ingresar)
 
         layout.addSpacing(20)
 
-        # Botón registrar
         btn_registrar = QPushButton("Crear cuenta nueva")
         btn_registrar.setObjectName("secundario")
         btn_registrar.clicked.connect(self._abrir_registro_moderno)
@@ -1271,7 +1251,6 @@ class VentanaLoginPadres(QWidget):
 
         layout.addSpacing(30)
 
-        # Botón volver
         btn_volver = QPushButton("← Volver al Inicio")
         btn_volver.setStyleSheet("""
             QPushButton {
@@ -1297,7 +1276,6 @@ class VentanaLoginPadres(QWidget):
         self.registro.show()
 
     def _login(self):
-        # Validar conexión a BD
         if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
             QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
             return
@@ -1420,7 +1398,6 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.setContentsMargins(40, 40, 40, 40)
         layout_principal.setSpacing(0)
 
-        # Header
         header_layout = QHBoxLayout()
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 40px;")
@@ -1432,7 +1409,6 @@ class VentanaRegistroModerno(QWidget):
         header_layout.addStretch()
         layout_principal.addLayout(header_layout)
 
-        # Títulos
         titulo = QLabel("Crear Cuenta")
         titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1446,7 +1422,6 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addWidget(subtitulo)
         layout_principal.addSpacing(20)
 
-        # Formulario
         form_layout = QFormLayout()
         form_layout.setSpacing(15)
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
@@ -1492,16 +1467,13 @@ class VentanaRegistroModerno(QWidget):
         layout_principal.addLayout(form_layout)
         layout_principal.addSpacing(20)
 
-        # Checkbox términos
         self.check_terminos = QCheckBox("Acepto los términos y condiciones y la política de privacidad")
         layout_principal.addWidget(self.check_terminos)
 
-        # Botón registrar
         self.btn_registrar = QPushButton("Crear Cuenta")
         self.btn_registrar.clicked.connect(self._registrar_usuario)
         layout_principal.addWidget(self.btn_registrar)
 
-        # Enlace a login
         layout_login = QHBoxLayout()
         lbl_tiene_cuenta = QLabel("¿Ya tienes una cuenta?")
         lbl_tiene_cuenta.setStyleSheet("color: #64748B;")
@@ -1532,7 +1504,6 @@ class VentanaRegistroModerno(QWidget):
 
         self.setLayout(layout_principal)
 
-        # Conectar validaciones
         self.txt_contrasena.textChanged.connect(self._validar_contraseña)
         self.txt_confirmar.textChanged.connect(self._validar_contraseña)
         self.txt_usuario.textChanged.connect(self._validar_usuario)
@@ -1558,7 +1529,6 @@ class VentanaRegistroModerno(QWidget):
             self.txt_usuario.setStyleSheet(self.txt_usuario.styleSheet())
 
     def _registrar_usuario(self):
-        # Validar conexión a BD
         if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
             QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
             return
@@ -1570,7 +1540,6 @@ class VentanaRegistroModerno(QWidget):
         contrasena = self.txt_contrasena.text()
         confirmar = self.txt_confirmar.text()
 
-        # Validaciones
         errores = []
 
         if not nombre:
@@ -1595,22 +1564,18 @@ class VentanaRegistroModerno(QWidget):
             QMessageBox.warning(self, "Error de validación", "\n".join(errores))
             return
 
-        # Registrar en BD
         try:
-            # Verificar si el usuario ya existe
             existente = self.bd.consultar("SELECT * FROM Usuario WHERE usuario=?", (usuario,))
             if existente:
                 QMessageBox.warning(self, "Usuario existente",
                                     "El nombre de usuario ya está en uso. Por favor elige otro.")
                 return
 
-            # Insertar usuario
             self.bd.ejecutar(
                 "INSERT INTO Usuario (nombre, usuario, contrasena, tipo) VALUES (?, ?, ?, ?)",
                 (nombre, usuario, contrasena, self.tipo_usuario)
             )
 
-            # Si es padre, crear también en tabla Cliente
             if self.tipo_usuario == "padre":
                 self.bd.ejecutar(
                     "INSERT INTO Cliente (nombre, telefono, correo, total_compras, descuento) VALUES (?, ?, ?, ?, ?)",
@@ -1640,7 +1605,6 @@ class VentanaRegistroModerno(QWidget):
         self.ventana_login.show()
 
     def closeEvent(self, event):
-        """Maneja el cierre de la ventana"""
         if self.bd:
             self.bd.cerrar()
         event.accept()
@@ -2007,10 +1971,8 @@ class VentanaPadres(QWidget):
         """)
         self.contenido_layout.addWidget(self.lista_mis_utiles)
 
-        # Actualizar la lista
         self.actualizar_lista_utiles()
 
-        # Botones de acción
         botones_layout = QHBoxLayout()
 
         btn_agregar = QPushButton("➕ Agregar Útil")
