@@ -263,14 +263,17 @@ class VentanaInicio(QWidget):
         super().__init__()
         self.setWindowTitle("Librería Escolar ABC")
         self.setStyleSheet("background-color: #F5F5F5;")
-        # self.bd = ConexionBD(DB_FILE)  # Descomenta si necesitas la BD
+        self.bd = ConexionBD(DB_FILE)
         self._construir_ui()
 
-        # Configurar para pantalla completa después de construir la UI
         self.showMaximized()
 
+        self.ventana_login = None
+        self.ventana_padres = None
+        self.ventana_admin = None
+        self.ventana_registro = None
+
     def _construir_ui(self):
-        # Usar QScrollArea para contenido responsive
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -638,7 +641,6 @@ class VentanaInicio(QWidget):
         tabla.setRowCount(5)
         tabla.setHorizontalHeaderLabels(["Grado", "Productos Incluidos", "Precio Total", "Acción"])
 
-        # Configurar tabla para ser responsive
         header = tabla.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
@@ -791,60 +793,124 @@ class VentanaInicio(QWidget):
 
         return footer
 
-    # Métodos de navegación (sin cambios)
     def _ir_a_inicio(self):
-        QMessageBox.information(self, "Inicio", "Ya te encuentras en la página de inicio")
+        self.showMaximized()
 
     def _ir_a_productos(self):
         self._mostrar_login()
 
     def _ir_a_listas(self):
-        QMessageBox.information(self, "Listas de Útiles", "Aquí verías las listas completas por grado")
+        self._mostrar_login()
 
     def _ir_a_promociones(self):
-        QMessageBox.information(self, "Promociones", "Promociones especiales y descuentos")
+        QMessageBox.information(self, "Promociones",
+                               "🎉 Promociones Especiales 🎉\n\n"
+                               "• 20% de descuento en mochilas\n"
+                               "• 2x1 en cuadernos cuadriculados\n"
+                               "• Pack escolar completo con 15% off\n"
+                               "• Descuento del 10% en compras mayores a Q300")
 
     def _ir_a_contacto(self):
         QMessageBox.information(self, "Contacto",
-                                "Librería Escolar ABC\n"
-                                "Tel: (502) 1234-5678\n"
-                                "Email: info@libreriaabc.com\n"
-                                "Ciudad de Guatemala")
+                                "📞 **Librería Escolar ABC**\n\n"
+                                "**Teléfono:** (502) 1234-5678\n"
+                                "**Email:** info@libreriaabc.com\n"
+                                "**Dirección:** Ciudad de Guatemala\n"
+                                "**Horario:** Lunes a Viernes 8:00-18:00\n\n"
+                                "¡Estamos para servirte! 🎒✏️")
 
     def _ir_a_catalogo(self):
         self._mostrar_login()
 
     def _ir_a_cuadernos(self):
-        QMessageBox.information(self, "Cuadernos", "Catálogo de cuadernos")
+        self._mostrar_login()
 
     def _ir_a_lapices(self):
-        QMessageBox.information(self, "Lápices", "Catálogo de lápices")
+        self._mostrar_login()
 
     def _ir_a_mochilas(self):
-        QMessageBox.information(self, "Mochilas", "Catálogo de mochilas")
+
+        self._mostrar_login()
 
     def _ir_a_colores(self):
-        QMessageBox.information(self, "Colores", "Catálogo de colores")
+
+        self._mostrar_login()
 
     def _ir_a_envios(self):
-        QMessageBox.information(self, "Envíos", "Información sobre envíos y entregas")
+        QMessageBox.information(self, "Envíos y Entregas",
+                                "🚚 **Información de Envíos**\n\n"
+                                "• **Entrega estándar:** 24-48 horas\n"
+                                "• **Envío express:** Mismo día (pedidos antes de las 12pm)\n"
+                                "• **Costo de envío:** Q25.00 en ciudad\n"
+                                "• **Envío gratis:** En compras mayores a Q200\n"
+                                "• **Área de cobertura:** Toda el área metropolitana")
 
     def _ir_a_ofertas(self):
-        QMessageBox.information(self, "Ofertas", "Las mejores ofertas y precios")
+        QMessageBox.information(self, "Ofertas Especiales",
+                                "💰 **Las Mejores Ofertas**\n\n"
+                                "🔥 **Ofertas de la Semana:**\n"
+                                "• Pack de regreso a clases: Q199.00 (valor Q250)\n"
+                                "• Mochila + Estuche: Q280.00\n"
+                                "• Cuadernos x5: Q99.00\n\n"
+                                "🎁 **Promociones permanentes:**\n"
+                                "• 10% descuento pagando con tarjeta\n"
+                                "• Puntos acumulables por cada compra")
 
     def _ir_a_calidad(self):
-        QMessageBox.information(self, "Calidad", "Nuestros estándares de calidad")
+        QMessageBox.information(self, "Nuestra Calidad",
+                                "⭐ **Estándares de Calidad**\n\n"
+                                "• Productos 100% originales y certificados\n"
+                                "• Materiales de primera calidad\n"
+                                "• Garantía en todos nuestros productos\n"
+                                "• Proveedores confiables y verificados\n"
+                                "• Control de calidad riguroso")
 
     def _ir_a_inventario(self):
-        QMessageBox.information(self, "Inventario", "Nuestro amplio inventario")
+        QMessageBox.information(self, "Nuestro Inventario",
+                                "📦 **Amplio Inventario**\n\n"
+                                "Contamos con más de 500 productos diferentes:\n"
+                                "• Útiles escolares para todos los grados\n"
+                                "• Material de oficina y papelería\n"
+                                "• Mochilas y loncheras\n"
+                                "• Material artístico y creativo\n"
+                                "• Tecnología educativa\n\n"
+                                "¡Todo en un solo lugar!")
 
     def _ver_lista_grado(self, grado):
-        QMessageBox.information(self, f"Lista {grado}", f"Lista completa de útiles para {grado}")
+        self._mostrar_login()
 
     def _mostrar_login(self):
         self.hide()
-        self.login_window = VentanaTipoUsuario()
-        self.login_window.show()
+        if self.ventana_login is None:
+            self.ventana_login = VentanaTipoUsuario(ventana_principal=self)
+        self.ventana_login.showMaximized()
+
+    def mostrar_ventana_principal(self):
+        self.showMaximized()
+
+    def abrir_ventana_padres(self, bd, id_usuario):
+        self.hide()
+        if self.ventana_padres is None:
+            self.ventana_padres = VentanaPadres(bd, id_usuario, ventana_principal=self)
+        self.ventana_padres.showMaximized()
+
+    def abrir_ventana_admin(self, bd):
+        self.hide()
+        if self.ventana_admin is None:
+            self.ventana_admin = VentanaAdmin(bd, ventana_principal=self)
+        self.ventana_admin.showMaximized()
+
+    def closeEvent(self, event):
+        if self.ventana_login:
+            self.ventana_login.close()
+        if self.ventana_padres:
+            self.ventana_padres.close()
+        if self.ventana_admin:
+            self.ventana_admin.close()
+        if self.bd:
+            self.bd.cerrar()
+        event.accept()
+
 class Categoria:
     def __init__(self, nombre):
         self.nombre = nombre
@@ -979,10 +1045,11 @@ class GestionUsuario:
 
 
 class VentanaTipoUsuario(QWidget):
-    def __init__(self):
+    def __init__(self, ventana_principal=None):
         super().__init__()
         self.padres = None
         self.admin = None
+        self.ventana_principal = ventana_principal
         self.setWindowTitle("Selecciona tipo de usuario")
         self.showMaximized()
         self._aplicar_estilos()
@@ -1016,12 +1083,23 @@ class VentanaTipoUsuario(QWidget):
     def _construir_ui(self):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.setContentsMargins(0, 20, 0, 0)
+
+        header_layout = QHBoxLayout()
+        btn_volver = QPushButton("← Volver al Inicio")
+        btn_volver.setObjectName("volver")
+        btn_volver.clicked.connect(self._volver_al_inicio)
+        header_layout.addWidget(btn_volver)
+        header_layout.addStretch()
+
+        main_layout.addLayout(header_layout)
+        main_layout.addSpacing(20)
 
         container = QWidget()
         container.setFixedSize(600, 500)
         container_layout = QVBoxLayout(container)
         container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        container_layout.setSpacing(30)
+        container_layout.setSpacing(25)
 
         logo_layout = QHBoxLayout()
         logo_label = QLabel("📚")
@@ -1036,12 +1114,12 @@ class VentanaTipoUsuario(QWidget):
         titulo = QLabel("Bienvenido a Librería ABC")
         titulo.setFont(QFont("Segoe UI", 24, QFont.Weight.Bold))
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        titulo.setStyleSheet("color: #1E293B; margin-bottom: 20px;")
+        titulo.setStyleSheet("color: #1E293B; margin-bottom: 15px;")
 
         subtitulo = QLabel("Selecciona tu tipo de usuario para continuar")
         subtitulo.setFont(QFont("Segoe UI", 14))
         subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitulo.setStyleSheet("color: #64748B; margin-bottom: 40px;")
+        subtitulo.setStyleSheet("color: #64748B; margin-bottom: 30px;")
 
         btn_padres = QPushButton("👨‍👩‍👧‍👦 Padres de Familia")
         btn_padres.clicked.connect(self._abrir_padres)
@@ -1050,27 +1128,43 @@ class VentanaTipoUsuario(QWidget):
         btn_admin.clicked.connect(self._abrir_admin)
 
         container_layout.addLayout(logo_layout)
+        container_layout.addSpacing(15)
         container_layout.addWidget(titulo)
         container_layout.addWidget(subtitulo)
+        container_layout.addSpacing(10)
         container_layout.addWidget(btn_padres)
         container_layout.addWidget(btn_admin)
 
-        main_layout.addWidget(container)
+        centrado_layout = QHBoxLayout()
+        centrado_layout.addStretch()
+        centrado_layout.addWidget(container)
+        centrado_layout.addStretch()
+
+        main_layout.addLayout(centrado_layout)
+        main_layout.addStretch()
+
         self.setLayout(main_layout)
 
     def _abrir_padres(self):
         self.hide()
         if self.padres is None:
-            self.padres = VentanaLoginPadres()
+            self.padres = VentanaLoginPadres(ventana_principal=self.ventana_principal)
         self.padres.showMaximized()
 
     def _abrir_admin(self):
         self.hide()
         if self.admin is None:
-            self.admin = VentanaLoginAdmin()
+            self.admin = VentanaLoginAdmin(ventana_principal=self.ventana_principal)
         self.admin.showMaximized()
 
+    def _volver_al_inicio(self):
+        self.close()
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
+
     def closeEvent(self, event):
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
         if self.padres:
             self.padres.close()
         if self.admin:
@@ -1079,9 +1173,10 @@ class VentanaTipoUsuario(QWidget):
 
 
 class VentanaLoginAdmin(QWidget):
-    def __init__(self):
+    def __init__(self, ventana_principal=None):
         super().__init__()
         self.bd = ConexionBD(DB_FILE)
+        self.ventana_principal = ventana_principal
         self.registro = None
         self.admin_principal = None
         self.tipo_usuario = None
@@ -1236,17 +1331,18 @@ class VentanaLoginAdmin(QWidget):
             if filas:
                 QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
                 self.hide()
-                self.admin_principal = VentanaAdmin(self.bd)
-                self.admin_principal.show()
-            else:
-                QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+                if self.ventana_principal:
+                    self.ventana_principal.abrir_ventana_admin(self.bd)
+                else:
+                    self.admin_principal = VentanaAdmin(self.bd)
+                    self.admin_principal.show()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al consultar la base de datos: {str(e)}")
 
     def _volver(self):
         self.close()
-        self.tipo_usuario = VentanaTipoUsuario()
-        self.tipo_usuario.showMaximized()
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
 
     def closeEvent(self, event):
         if self.bd:
@@ -1255,9 +1351,10 @@ class VentanaLoginAdmin(QWidget):
 
 
 class VentanaLoginPadres(QWidget):
-    def __init__(self):
+    def __init__(self, ventana_principal=None):
         super().__init__()
         self.bd = ConexionBD(DB_FILE)
+        self.ventana_principal = ventana_principal
         self.registro = None
         self.padres_principal = None
         self.tipo_usuario = None
@@ -1412,17 +1509,18 @@ class VentanaLoginPadres(QWidget):
             if filas:
                 QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
                 self.hide()
-                self.padres_principal = VentanaPadres(self.bd, filas[0][0])
-                self.padres_principal.show()
-            else:
-                QMessageBox.critical(self, "Error", "Usuario o contraseña incorrectos.")
+                if self.ventana_principal:
+                    self.ventana_principal.abrir_ventana_padres(self.bd, filas[0][0])
+                else:
+                    self.padres_principal = VentanaPadres(self.bd, filas[0][0])
+                    self.padres_principal.show()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al consultar la base de datos: {str(e)}")
 
     def _volver(self):
         self.close()
-        self.tipo_usuario = VentanaTipoUsuario()
-        self.tipo_usuario.showMaximized()
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
 
     def closeEvent(self, event):
         """Maneja el cierre de la ventana"""
@@ -1727,10 +1825,11 @@ class VentanaRegistroModerno(QWidget):
         event.accept()
 
 class VentanaPadres(QWidget):
-    def __init__(self, bd, id_usuario):
+    def __init__(self, bd, id_usuario, ventana_principal=None):
         super().__init__()
         self.bd = bd
         self.id_usuario = id_usuario
+        self.ventana_principal = ventana_principal
         self.setWindowTitle("Padres de Familia - Librería ABC")
         self.resize(1200, 800)
         self.lista_seleccionados = []
@@ -1781,6 +1880,25 @@ class VentanaPadres(QWidget):
             ("📋 Listas Predefinidas", self.mostrar_listas_predefinidas),
             ("❌ Cerrar Sesión", self.cerrar_sesion)
         ]
+
+        header_layout = QHBoxLayout()
+        btn_volver = QPushButton("🏠 Volver al Inicio")
+        btn_volver.setStyleSheet("""
+                         QPushButton {
+                             background-color: #6B7280;
+                             color: white;
+                             border: none;
+                             border-radius: 5px;
+                             padding: 8px 15px;
+                             font-size: 12px;
+                         }
+                         QPushButton:hover {
+                             background-color: #4B5563;
+                         }
+                     """)
+        btn_volver.clicked.connect(self.volver_al_inicio)
+        header_layout.addWidget(btn_volver)
+        header_layout.addStretch()
 
         for texto, funcion in botones_menu:
             btn = QPushButton(texto)
@@ -2736,27 +2854,52 @@ class VentanaPadres(QWidget):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"No se pudo completar la compra: {str(e)}")
 
+    def volver_al_inicio(self):
+        self.close()
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
+
     def cerrar_sesion(self):
         respuesta = QMessageBox.question(
             self, "Cerrar sesión", "¿Estás seguro de que quieres cerrar sesión?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-
         if respuesta == QMessageBox.StandardButton.Yes:
-            self.close()
+            self.volver_al_inicio()
 
 
 class VentanaAdmin(QWidget):
-    def __init__(self, bd, mostrar_login=None):
+    def __init__(self, bd, ventana_principal=None):
         super().__init__()
         self.bd = bd
-        self.mostrar_login = mostrar_login
+        self.ventana_principal = ventana_principal
+        self.mostrar_login = None
         self.setWindowTitle("Administrador - Librería ABC")
         self.resize(1000, 600)
         self._construir_ui()
 
     def _construir_ui(self):
         main_layout = QVBoxLayout(self)
+
+        header_layout = QHBoxLayout()
+        btn_volver = QPushButton("🏠 Volver al Inicio")
+        btn_volver.setStyleSheet("""
+                 QPushButton {
+                     background-color: #6B7280;
+                     color: white;
+                     border: none;
+                     border-radius: 5px;
+                     padding: 8px 15px;
+                     font-size: 12px;
+                 }
+                 QPushButton:hover {
+                     background-color: #4B5563;
+                 }
+             """)
+        btn_volver.clicked.connect(self.volver_al_inicio)
+        header_layout.addWidget(btn_volver)
+        header_layout.addStretch()
+
         titulo = QLabel("Panel de administración")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         titulo.setStyleSheet("font-size: 26px; font-weight: bold;")
@@ -2868,10 +3011,13 @@ class VentanaAdmin(QWidget):
         if widget:
             self.stacked_layout.setCurrentWidget(widget)
 
+    def volver_al_inicio(self):
+        self.close()
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
+
     def _abrir_login(self):
-        self.hide()
-        self.mostrar_login = VentanaTipoUsuario()
-        self.mostrar_login.show()
+        self.volver_al_inicio()
 
 
 class PantallaAgregarCategoria(QWidget):
