@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QMessageBox, QInputDialog, QHBoxLayout,
     QStackedLayout, QListWidget, QListWidgetItem, QFileDialog,
     QSpinBox, QScrollArea, QTableWidget, QTableWidgetItem, QComboBox,
-    QFrame, QGridLayout, QGroupBox, QFormLayout, QCheckBox
+    QFrame, QGridLayout, QGroupBox, QFormLayout, QCheckBox, QHeaderView
 )
 from PySide6.QtGui import QFont, QPixmap, QColor, QIcon
 from PySide6.QtCore import Qt, QSize
@@ -257,36 +257,66 @@ class ManejadorRecursos:
         }
         return iconos.get(categoria.lower() if categoria else "", "📦")
 
+
 class VentanaInicio(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Librería Escolar ABC")
-        self.resize(1200, 800)
         self.setStyleSheet("background-color: #F5F5F5;")
-        self.bd = ConexionBD(DB_FILE)
+        # self.bd = ConexionBD(DB_FILE)  # Descomenta si necesitas la BD
         self._construir_ui()
 
+        # Configurar para pantalla completa después de construir la UI
+        self.showMaximized()
+
     def _construir_ui(self):
-        main_layout = QVBoxLayout()
+        # Usar QScrollArea para contenido responsive
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("border: none; background: transparent;")
+
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+        header = self._crear_header()
+        hero = self._crear_hero_section()
+        features = self._crear_seccion_caracteristicas()
+        productos = self._crear_seccion_productos()
+        listas_utiles = self._crear_seccion_listas()
+        footer = self._crear_footer()
 
+        main_layout.addWidget(header)
+        main_layout.addWidget(hero)
+        main_layout.addWidget(features)
+        main_layout.addWidget(productos)
+        main_layout.addWidget(listas_utiles)
+        main_layout.addWidget(footer)
+
+        scroll_area.setWidget(main_widget)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(scroll_area)
+
+    def _crear_header(self):
         header = QWidget()
         header.setFixedHeight(80)
         header.setStyleSheet("background-color: #1E40AF; color: white;")
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(30, 0, 30, 0)
 
-
         logo_layout = QHBoxLayout()
         logo_label = QLabel("📚")
-        logo_label.setStyleSheet("font-size: 32px;")
+        logo_label.setStyleSheet("font-size: 32px; background: transparent;")
         titulo = QLabel("Librería Escolar ABC")
-        titulo.setStyleSheet("font-size: 24px; font-weight: bold; color: white; margin-left: 10px;")
+        titulo.setStyleSheet(
+            "font-size: 24px; font-weight: bold; color: white; margin-left: 10px; background: transparent;")
         logo_layout.addWidget(logo_label)
         logo_layout.addWidget(titulo)
-
 
         nav_layout = QHBoxLayout()
         nav_items = [
@@ -316,8 +346,6 @@ class VentanaInicio(QWidget):
             btn.clicked.connect(item_func)
             nav_layout.addWidget(btn)
 
-
-        user_layout = QHBoxLayout()
         btn_login = QPushButton("Iniciar Sesión")
         btn_login.setStyleSheet("""
             QPushButton {
@@ -341,7 +369,9 @@ class VentanaInicio(QWidget):
         header_layout.addStretch()
         header_layout.addWidget(btn_login)
 
+        return header
 
+    def _crear_hero_section(self):
         hero = QWidget()
         hero.setFixedHeight(400)
         hero.setStyleSheet("""
@@ -353,11 +383,22 @@ class VentanaInicio(QWidget):
         hero_layout.setContentsMargins(100, 60, 100, 60)
 
         hero_title = QLabel("Encuentra todo lo que\nnecesitas para el colegio")
-        hero_title.setStyleSheet("font-size: 48px; font-weight: bold; color: white; line-height: 1.2;")
+        hero_title.setStyleSheet("""
+            font-size: 48px; 
+            font-weight: bold; 
+            color: white; 
+            line-height: 1.2;
+            background: transparent;
+        """)
         hero_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         hero_subtitle = QLabel("Útiles escolares de calidad para todos los grados")
-        hero_subtitle.setStyleSheet("font-size: 20px; color: #E0F2FE; margin-top: 20px;")
+        hero_subtitle.setStyleSheet("""
+            font-size: 20px; 
+            color: #E0F2FE; 
+            margin-top: 20px;
+            background: transparent;
+        """)
         hero_subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         hero_btn = QPushButton("Ver Catálogo Completo →")
@@ -383,27 +424,7 @@ class VentanaInicio(QWidget):
         hero_layout.addWidget(hero_subtitle)
         hero_layout.addWidget(hero_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-
-        features = self._crear_seccion_caracteristicas()
-
-
-        productos = self._crear_seccion_productos()
-
-
-        listas_utiles = self._crear_seccion_listas()
-
-
-        footer = self._crear_footer()
-
-
-        main_layout.addWidget(header)
-        main_layout.addWidget(hero)
-        main_layout.addWidget(features)
-        main_layout.addWidget(productos)
-        main_layout.addWidget(listas_utiles)
-        main_layout.addWidget(footer)
-
-        self.setLayout(main_layout)
+        return hero
 
     def _crear_seccion_caracteristicas(self):
         features = QWidget()
@@ -411,10 +432,19 @@ class VentanaInicio(QWidget):
         features_layout.setContentsMargins(50, 50, 50, 50)
 
         features_title = QLabel("¿Por qué elegirnos?")
-        features_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #1E293B; margin-bottom: 40px;")
+        features_title.setStyleSheet("""
+            font-size: 36px; 
+            font-weight: bold; 
+            color: #1E293B; 
+            margin-bottom: 40px;
+            background: transparent;
+        """)
         features_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        features_grid = QGridLayout()
+        features_grid = QHBoxLayout()
+        features_grid.setSpacing(20)
+        features_grid.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         features_data = [
             ("🚚", "Entrega Rápida", "Recibe tus productos en 24-48 horas", self._ir_a_envios),
             ("💰", "Precios Bajos", "Los mejores precios del mercado", self._ir_a_ofertas),
@@ -422,9 +452,11 @@ class VentanaInicio(QWidget):
             ("📦", "Gran Inventario", "Todo lo que necesitas en un solo lugar", self._ir_a_inventario)
         ]
 
-        for i, (icono, titulo, desc, funcion) in enumerate(features_data):
+        for icono, titulo, desc, funcion in features_data:
             card = QWidget()
-            card.setFixedSize(250, 180)
+            card.setMinimumWidth(250)
+            card.setMinimumHeight(180)
+            card.setMaximumWidth(300)
             card.setStyleSheet("""
                 QWidget {
                     background-color: white;
@@ -438,17 +470,34 @@ class VentanaInicio(QWidget):
                 }
             """)
             card_layout = QVBoxLayout(card)
+            card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             icon = QLabel(icono)
-            icon.setStyleSheet("font-size: 40px;")
+            icon.setStyleSheet("""
+                font-size: 50px; 
+                background: transparent;
+                min-height: 60px;
+            """)
             icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             title = QLabel(titulo)
-            title.setStyleSheet("font-size: 20px; font-weight: bold; color: #1E293B; margin-top: 10px;")
+            title.setStyleSheet("""
+                font-size: 20px; 
+                font-weight: bold; 
+                color: #1E293B; 
+                margin-top: 10px;
+                background: transparent;
+            """)
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             description = QLabel(desc)
-            description.setStyleSheet("font-size: 14px; color: #64748B; margin-top: 10px; text-align: center;")
+            description.setStyleSheet("""
+                font-size: 14px; 
+                color: #64748B; 
+                margin-top: 10px; 
+                text-align: center;
+                background: transparent;
+            """)
             description.setWordWrap(True)
             description.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -456,13 +505,11 @@ class VentanaInicio(QWidget):
             card_layout.addWidget(title)
             card_layout.addWidget(description)
 
-
             card.mousePressEvent = lambda event, func=funcion: func()
-            features_grid.addWidget(card, i // 2, i % 2)
+            features_grid.addWidget(card)
 
         features_layout.addWidget(features_title)
         features_layout.addLayout(features_grid)
-        features_layout.setAlignment(features_grid, Qt.AlignmentFlag.AlignCenter)
 
         return features
 
@@ -472,11 +519,18 @@ class VentanaInicio(QWidget):
         productos_layout.setContentsMargins(50, 50, 50, 50)
 
         productos_title = QLabel("Productos Destacados")
-        productos_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #1E293B; margin-bottom: 30px;")
+        productos_title.setStyleSheet("""
+            font-size: 36px; 
+            font-weight: bold; 
+            color: #1E293B; 
+            margin-bottom: 30px;
+            background: transparent;
+        """)
         productos_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         productos_grid = QHBoxLayout()
-
+        productos_grid.setSpacing(20)
+        productos_grid.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         productos_data = [
             ("Cuadernos", "útiles escolares", "Desde Q25.00", self._ir_a_cuadernos),
@@ -487,10 +541,26 @@ class VentanaInicio(QWidget):
 
         for titulo, categoria, precio, funcion in productos_data:
             card = QWidget()
-            card.setFixedSize(200, 200)
+            card.setMinimumWidth(180)
+            card.setMinimumHeight(200)
+            card.setMaximumWidth(220)
 
-            color_fondo = ManejadorRecursos.obtener_color_categoria(categoria)
-            emoji = ManejadorRecursos.obtener_icono_categoria(categoria)
+            colores_categorias = {
+                "útiles escolares": "#FFE4E6",
+                "escritura": "#E0F2FE",
+                "mochilas": "#F0FDF4",
+                "arte": "#FEF7CD"
+            }
+
+            emojis_categorias = {
+                "útiles escolares": "📓",
+                "escritura": "✏️",
+                "mochilas": "🎒",
+                "arte": "🎨"
+            }
+
+            color_fondo = colores_categorias.get(categoria, "#F5F5F5")
+            emoji = emojis_categorias.get(categoria, "📦")
 
             card.setStyleSheet(f"""
                 QWidget {{
@@ -506,17 +576,33 @@ class VentanaInicio(QWidget):
             """)
 
             card_layout = QVBoxLayout(card)
+            card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            icon = QLabel(emoji)  # Usar el emoji del manejador
-            icon.setStyleSheet("font-size: 50px;")
+            icon = QLabel(emoji)
+            icon.setStyleSheet("""
+                font-size: 60px; 
+                background: transparent;
+                min-height: 70px;
+            """)
             icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             title = QLabel(titulo)
-            title.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E293B; margin-top: 15px;")
+            title.setStyleSheet("""
+                font-size: 18px; 
+                font-weight: bold; 
+                color: #1E293B; 
+                margin-top: 15px;
+                background: transparent;
+            """)
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             price = QLabel(precio)
-            price.setStyleSheet("font-size: 16px; color: #64748B; margin-top: 10px;")
+            price.setStyleSheet("""
+                font-size: 16px; 
+                color: #64748B; 
+                margin-top: 10px;
+                background: transparent;
+            """)
             price.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             card_layout.addWidget(icon)
@@ -528,7 +614,6 @@ class VentanaInicio(QWidget):
 
         productos_layout.addWidget(productos_title)
         productos_layout.addLayout(productos_grid)
-        productos_layout.setAlignment(productos_grid, Qt.AlignmentFlag.AlignCenter)
 
         return productos
 
@@ -539,7 +624,13 @@ class VentanaInicio(QWidget):
         listas_layout.setContentsMargins(50, 50, 50, 50)
 
         listas_title = QLabel("Listas de Útiles por Grado")
-        listas_title.setStyleSheet("font-size: 36px; font-weight: bold; color: #1E293B; margin-bottom: 30px;")
+        listas_title.setStyleSheet("""
+            font-size: 36px; 
+            font-weight: bold; 
+            color: #1E293B; 
+            margin-bottom: 30px;
+            background: transparent;
+        """)
         listas_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         tabla = QTableWidget()
@@ -547,6 +638,12 @@ class VentanaInicio(QWidget):
         tabla.setRowCount(5)
         tabla.setHorizontalHeaderLabels(["Grado", "Productos Incluidos", "Precio Total", "Acción"])
 
+        # Configurar tabla para ser responsive
+        header = tabla.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         datos_listas = [
             ("1°-3° Primaria", "Cuaderno, Lápices, Borradores", "Q 185.00", "Ver Lista"),
@@ -560,7 +657,6 @@ class VentanaInicio(QWidget):
             tabla.setItem(fila, 0, QTableWidgetItem(grado))
             tabla.setItem(fila, 1, QTableWidgetItem(productos))
             tabla.setItem(fila, 2, QTableWidgetItem(precio))
-
 
             btn_ver = QPushButton(accion)
             btn_ver.setStyleSheet("""
@@ -579,7 +675,6 @@ class VentanaInicio(QWidget):
             btn_ver.clicked.connect(lambda checked, grad=grado: self._ver_lista_grado(grad))
             tabla.setCellWidget(fila, 3, btn_ver)
 
-
         tabla.setStyleSheet("""
             QTableWidget {
                 background-color: white;
@@ -590,6 +685,7 @@ class VentanaInicio(QWidget):
             QTableWidget::item {
                 padding: 12px;
                 border-bottom: 1px solid #E2E8F0;
+                background: transparent;
             }
             QHeaderView::section {
                 background-color: #1E40AF;
@@ -599,7 +695,6 @@ class VentanaInicio(QWidget):
                 border: none;
             }
         """)
-        tabla.horizontalHeader().setStretchLastSection(True)
         tabla.verticalHeader().setVisible(False)
         tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
@@ -615,21 +710,33 @@ class VentanaInicio(QWidget):
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(100, 40, 100, 40)
 
-
         info_col = QVBoxLayout()
         info_title = QLabel("Librería Escolar ABC")
-        info_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 20px;")
+        info_title.setStyleSheet("""
+            font-size: 20px; 
+            font-weight: bold; 
+            margin-bottom: 20px;
+            background: transparent;
+        """)
 
         info_text = QLabel("Tu tienda de confianza para\nútiles escolares de calidad")
-        info_text.setStyleSheet("color: #94A3B8; line-height: 1.5;")
+        info_text.setStyleSheet("""
+            color: #94A3B8; 
+            line-height: 1.5;
+            background: transparent;
+        """)
 
         info_col.addWidget(info_title)
         info_col.addWidget(info_text)
 
-
         links_col = QVBoxLayout()
         links_title = QLabel("Enlaces Rápidos")
-        links_title.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 15px;")
+        links_title.setStyleSheet("""
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-bottom: 15px;
+            background: transparent;
+        """)
 
         links_data = [
             ("Inicio", self._ir_a_inicio),
@@ -642,15 +749,23 @@ class VentanaInicio(QWidget):
         links_col.addWidget(links_title)
         for link_text, link_func in links_data:
             lbl = QLabel(link_text)
-            lbl.setStyleSheet("color: #94A3B8; margin: 5px 0;")
+            lbl.setStyleSheet("""
+                color: #94A3B8; 
+                margin: 5px 0;
+                background: transparent;
+            """)
             lbl.setCursor(Qt.CursorShape.PointingHandCursor)
             lbl.mousePressEvent = lambda event, func=link_func: func()
             links_col.addWidget(lbl)
 
-
         contact_col = QVBoxLayout()
         contact_title = QLabel("Contacto")
-        contact_title.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 15px;")
+        contact_title.setStyleSheet("""
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-bottom: 15px;
+            background: transparent;
+        """)
 
         contact_info = [
             "📞 (502) 1234-5678",
@@ -661,7 +776,11 @@ class VentanaInicio(QWidget):
         contact_col.addWidget(contact_title)
         for info in contact_info:
             lbl = QLabel(info)
-            lbl.setStyleSheet("color: #94A3B8; margin: 5px 0;")
+            lbl.setStyleSheet("""
+                color: #94A3B8; 
+                margin: 5px 0;
+                background: transparent;
+            """)
             contact_col.addWidget(lbl)
 
         footer_layout.addLayout(info_col)
@@ -672,9 +791,8 @@ class VentanaInicio(QWidget):
 
         return footer
 
-
+    # Métodos de navegación (sin cambios)
     def _ir_a_inicio(self):
-
         QMessageBox.information(self, "Inicio", "Ya te encuentras en la página de inicio")
 
     def _ir_a_productos(self):
@@ -724,7 +842,6 @@ class VentanaInicio(QWidget):
         QMessageBox.information(self, f"Lista {grado}", f"Lista completa de útiles para {grado}")
 
     def _mostrar_login(self):
-
         self.hide()
         self.login_window = VentanaTipoUsuario()
         self.login_window.show()
