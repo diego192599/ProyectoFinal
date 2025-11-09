@@ -803,21 +803,14 @@ class VentanaInicio(QWidget):
         self._mostrar_login()
 
     def _ir_a_promociones(self):
-        QMessageBox.information(self, "Promociones",
-                               "🎉 Promociones Especiales 🎉\n\n"
-                               "• 20% de descuento en mochilas\n"
-                               "• 2x1 en cuadernos cuadriculados\n"
-                               "• Pack escolar completo con 15% off\n"
-                               "• Descuento del 10% en compras mayores a Q300")
+        self.hide()
+        self.ventana_promociones = VentanaPromociones(ventana_principal=self)
+        self.ventana_promociones.show()
 
     def _ir_a_contacto(self):
-        QMessageBox.information(self, "Contacto",
-                                "📞 **Librería Escolar ABC**\n\n"
-                                "**Teléfono:** (502) 1234-5678\n"
-                                "**Email:** info@libreriaabc.com\n"
-                                "**Dirección:** Ciudad de Guatemala\n"
-                                "**Horario:** Lunes a Viernes 8:00-18:00\n\n"
-                                "¡Estamos para servirte! 🎒✏️")
+        self.hide()
+        self.ventana_contacto = VentanaContacto(ventana_principal=self)
+        self.ventana_contacto.show()
 
     def _ir_a_catalogo(self):
         self._mostrar_login()
@@ -4377,6 +4370,663 @@ class PantallaCrearLista(QWidget):
         QMessageBox.information(self, "Éxito", "Lista creada correctamente")
         self.txt_grado.clear();
         self.txt_id_cliente.clear()
+
+
+class VentanaPromociones(QWidget):
+    def __init__(self, ventana_principal=None):
+        super().__init__()
+        self.ventana_principal = ventana_principal
+        self.setWindowTitle("Promociones Especiales - Librería ABC")
+        self._aplicar_estilos()
+        self._construir_ui()
+        self.showMaximized()
+
+    def _aplicar_estilos(self):
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #F8FAFC;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }
+            QPushButton {
+                background-color: #1E40AF;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 20px;
+                font-size: 14px;
+                font-weight: bold;
+                margin: 5px;
+                min-height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #1E3A8A;
+            }
+            QPushButton#secundario {
+                background-color: #6B7280;
+            }
+            QPushButton#secundario:hover {
+                background-color: #4B5563;
+            }
+            QPushButton#oferta {
+                background-color: #DC2626;
+                font-size: 16px;
+                padding: 15px 25px;
+                min-height: 50px;
+            }
+            QPushButton#oferta:hover {
+                background-color: #B91C1C;
+            }
+            QPushButton#copiar {
+                min-height: 40px;
+                font-size: 14px;
+            }
+            QLabel#titulo {
+                font-size: 32px;
+                font-weight: bold;
+                color: #1E293B;
+            }
+            QLabel#subtitulo {
+                font-size: 18px;
+                color: #64748B;
+            }
+            QGroupBox {
+                background-color: white;
+                border: 2px solid #E2E8F0;
+                border-radius: 12px;
+                margin: 15px;
+                padding: 20px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 8px 15px;
+                background-color: #1E40AF;
+                color: white;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 16px;
+            }
+        """)
+
+    def _construir_ui(self):
+        layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+
+        header_layout = QHBoxLayout()
+
+        btn_volver = QPushButton("← Volver al Inicio")
+        btn_volver.setObjectName("secundario")
+        btn_volver.clicked.connect(self._volver_al_inicio)
+        btn_volver.setFixedHeight(45)
+        btn_volver.setMinimumWidth(180)
+
+        titulo = QLabel("🎉 Promociones Especiales")
+        titulo.setObjectName("titulo")
+
+        header_layout.addWidget(btn_volver)
+        header_layout.addStretch()
+        header_layout.addWidget(titulo)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        subtitulo = QLabel("Descubre nuestras increíbles ofertas y descuentos exclusivos")
+        subtitulo.setObjectName("subtitulo")
+        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitulo.setWordWrap(True)
+        layout.addWidget(subtitulo)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: #F1F5F9;
+                width: 15px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #CBD5E1;
+                border-radius: 7px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #94A3B8;
+            }
+        """)
+
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setSpacing(20)
+        scroll_layout.setContentsMargins(10, 10, 10, 10)
+
+        promociones = [
+            {
+                "titulo": "🔥 OFERTA RELÁMPAGO",
+                "descripcion": "20% DE DESCUENTO EN MOCHILAS",
+                "detalles": "Válido solo hoy en toda nuestra línea de mochilas escolares y deportivas. Perfecta para el regreso a clases.",
+                "codigo": "MOCHILA20",
+                "color": "#DC2626",
+                "icono": "🎒",
+                "validez": "Válido hasta: Hoy"
+            },
+            {
+                "titulo": "📚 PACK ESCOLAR COMPLETO",
+                "descripcion": "15% OFF EN PACKS COMPLETOS",
+                "detalles": "Incluye cuadernos, lápices, colores, regla, tijeras, pegamento y más. Todo lo necesario para el colegio en un solo pack.",
+                "codigo": "PACK15",
+                "color": "#059669",
+                "icono": "📦",
+                "validez": "Válido hasta: 30 días"
+            },
+            {
+                "titulo": "🎁 2x1 EN CUADERNOS",
+                "descripcion": "LLEVATE 2 PAGANDO 1",
+                "detalles": "Válido en cuadernos cuadriculados y rayados de 100 hojas. No acumulable con otras promociones.",
+                "codigo": "2X1CUAD",
+                "color": "#7C3AED",
+                "icono": "📓",
+                "validez": "Válido hasta: Fin de mes"
+            },
+            {
+                "titulo": "💳 10% DESCUENTO ADICIONAL",
+                "descripcion": "PAGANDO CON TARJETA",
+                "detalles": "Acumulable con otras promociones. Válido en todas las compras con tarjeta de crédito o débito.",
+                "codigo": "TARJETA10",
+                "color": "#0EA5E9",
+                "icono": "💳",
+                "validez": "Permanente"
+            },
+            {
+                "titulo": "🚚 ENVÍO GRATIS",
+                "descripcion": "EN COMPRAS MAYORES A Q200",
+                "detalles": "Recibe tu pedido sin costo adicional en toda el área metropolitana. Entrega en 24-48 horas.",
+                "codigo": "ENVIOGRATIS",
+                "color": "#F59E0B",
+                "icono": "🚚",
+                "validez": "Permanente"
+            },
+            {
+                "titulo": "⭐ CLIENTE FRECUENTE",
+                "descripcion": "ACUMULA PUNTOS POR COMPRA",
+                "detalles": "Por cada Q100 gastados, acumulas 10 puntos. Canjea por descuentos exclusivos y productos gratis.",
+                "codigo": "PUNTOSABC",
+                "color": "#8B5CF6",
+                "icono": "⭐",
+                "validez": "Permanente"
+            }
+        ]
+
+        grid_layout = QGridLayout()
+        grid_layout.setSpacing(20)
+        grid_layout.setContentsMargins(10, 10, 10, 10)
+
+        for i, promo in enumerate(promociones):
+            card = self._crear_tarjeta_promocion(promo)
+            row = i // 2
+            col = i % 2
+            grid_layout.addWidget(card, row, col)
+
+        scroll_layout.addLayout(grid_layout)
+        scroll_layout.addStretch()
+        scroll_area.setWidget(scroll_widget)
+        layout.addWidget(scroll_area)
+
+        btn_layout = QHBoxLayout()
+        btn_contacto = QPushButton("📞 Contactar para Más Información")
+        btn_contacto.setObjectName("oferta")
+        btn_contacto.setFixedHeight(55)
+        btn_contacto.setMinimumWidth(300)
+        btn_contacto.clicked.connect(self._abrir_contacto)
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(btn_contacto)
+        btn_layout.addStretch()
+
+        layout.addLayout(btn_layout)
+
+        self.setLayout(layout)
+
+    def _crear_tarjeta_promocion(self, promocion):
+        card = QGroupBox(f"{promocion['icono']} {promocion['titulo']}")
+        card.setMinimumHeight(300)
+        card.setStyleSheet(f"""
+            QGroupBox {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+                    stop:0 {promocion['color']}15, stop:1 white);
+                border: 2px solid {promocion['color']}40;
+            }}
+            QGroupBox::title {{
+                background-color: {promocion['color']};
+                color: white;
+                font-size: 14px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(12)
+
+        lbl_descripcion = QLabel(promocion['descripcion'])
+        lbl_descripcion.setStyleSheet(f"""
+            font-size: 20px; 
+            font-weight: bold; 
+            color: {promocion['color']};
+            margin: 10px 0px;
+            line-height: 1.3;
+        """)
+        lbl_descripcion.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_descripcion.setWordWrap(True)
+        lbl_descripcion.setMinimumHeight(50)
+        layout.addWidget(lbl_descripcion)
+
+        lbl_detalles = QLabel(promocion['detalles'])
+        lbl_detalles.setStyleSheet("""
+            font-size: 14px; 
+            color: #64748B; 
+            margin: 8px 0px; 
+            line-height: 1.4;
+        """)
+        lbl_detalles.setWordWrap(True)
+        lbl_detalles.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_detalles.setMinimumHeight(60)
+        layout.addWidget(lbl_detalles)
+
+        lbl_validez = QLabel(promocion['validez'])
+        lbl_validez.setStyleSheet("""
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #6B7280; 
+            margin: 5px 0px;
+        """)
+        lbl_validez.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_validez.setWordWrap(True)
+        layout.addWidget(lbl_validez)
+
+        layout_codigo = QHBoxLayout()
+
+        lbl_codigo = QLabel(promocion['codigo'])
+        lbl_codigo.setStyleSheet(f"""
+            font-size: 18px; 
+            font-weight: bold; 
+            color: {promocion['color']};
+            background-color: {promocion['color']}15;
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 2px dashed {promocion['color']};
+            min-width: 120px;
+        """)
+        lbl_codigo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_codigo.setMinimumWidth(120)
+
+        layout_codigo.addStretch()
+        layout_codigo.addWidget(lbl_codigo)
+        layout_codigo.addStretch()
+
+        layout.addLayout(layout_codigo)
+
+        btn_copiar_layout = QHBoxLayout()
+        btn_copiar = QPushButton("📋 Copiar Código")
+        btn_copiar.setObjectName("copiar")
+        btn_copiar.setFixedHeight(40)
+        btn_copiar.setMinimumWidth(150)
+        btn_copiar.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {promocion['color']};
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: {self._oscurecer_color(promocion['color'])};
+            }}
+        """)
+        btn_copiar.clicked.connect(lambda: self._copiar_codigo(promocion['codigo']))
+
+        btn_copiar_layout.addStretch()
+        btn_copiar_layout.addWidget(btn_copiar)
+        btn_copiar_layout.addStretch()
+
+        layout.addLayout(btn_copiar_layout)
+
+        return card
+
+    def _oscurecer_color(self, color_hex):
+        import re
+        match = re.search(r'^#([A-Fa-f0-9]{6})$', color_hex)
+        if match:
+            hex_color = match.group(1)
+            r = max(0, int(hex_color[0:2], 16) - 51)
+            g = max(0, int(hex_color[2:4], 16) - 51)
+            b = max(0, int(hex_color[4:6], 16) - 51)
+            return f"#{r:02x}{g:02x}{b:02x}"
+        return color_hex
+
+    def _copiar_codigo(self, codigo):
+        QApplication.clipboard().setText(codigo)
+        QMessageBox.information(self, "Código Copiado",
+                                f"El código '{codigo}' ha sido copiado al portapapeles.\n\n¡Úsalo al realizar tu compra!")
+
+    def _abrir_contacto(self):
+        self.ventana_contacto = VentanaContacto(self.ventana_principal)
+        self.ventana_contacto.showMaximized()
+
+    def _volver_al_inicio(self):
+        self.close()
+        if self.ventana_principal:
+            self.ventana_principal.showMaximized()
+
+
+class VentanaContacto(QWidget):
+    def __init__(self, ventana_principal=None):
+        super().__init__()
+        self.ventana_principal = ventana_principal
+        self.setWindowTitle("Contacto - Librería ABC")
+        self._aplicar_estilos()
+        self._construir_ui()
+        self.showMaximized()
+
+    def _aplicar_estilos(self):
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #F8FAFC;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }
+            QPushButton {
+                background-color: #1E40AF;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 20px;
+                font-size: 14px;
+                font-weight: bold;
+                margin: 5px;
+                min-height: 45px;
+            }
+            QPushButton:hover {
+                background-color: #1E3A8A;
+            }
+            QPushButton#secundario {
+                background-color: #6B7280;
+                min-width: 120px;
+            }
+            QPushButton#secundario:hover {
+                background-color: #4B5563;
+            }
+            QPushButton#whatsapp {
+                background-color: #25D366;
+                font-size: 16px;
+                padding: 15px 25px;
+                min-height: 50px;
+                min-width: 220px;
+            }
+            QPushButton#whatsapp:hover {
+                background-color: #128C7E;
+            }
+            QPushButton#llamar {
+                min-width: 150px;
+                min-height: 50px;
+            }
+            QPushButton#email {
+                min-width: 150px;
+                min-height: 50px;
+            }
+            QLabel#titulo {
+                font-size: 32px;
+                font-weight: bold;
+                color: #1E293B;
+            }
+            QLabel#subtitulo {
+                font-size: 18px;
+                color: #64748B;
+            }
+            QFrame#info_card {
+                background-color: white;
+                border: 2px solid #E2E8F0;
+                border-radius: 12px;
+                padding: 25px;
+            }
+        """)
+
+    def _construir_ui(self):
+        layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+
+        header_layout = QHBoxLayout()
+
+        btn_volver = QPushButton("← Volver")
+        btn_volver.setObjectName("secundario")
+        btn_volver.setFixedHeight(45)
+        btn_volver.setMinimumWidth(120)
+        btn_volver.clicked.connect(self.close)
+
+        titulo = QLabel("📞 Contacto - Librería ABC")
+        titulo.setObjectName("titulo")
+
+        header_layout.addWidget(btn_volver)
+        header_layout.addStretch()
+        header_layout.addWidget(titulo)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        subtitulo = QLabel("Estamos aquí para ayudarte. Contáctanos por cualquier consulta o solicitud")
+        subtitulo.setObjectName("subtitulo")
+        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitulo.setWordWrap(True)
+        layout.addWidget(subtitulo)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: #F1F5F9;
+                width: 15px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #CBD5E1;
+                border-radius: 7px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #94A3B8;
+            }
+        """)
+
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setSpacing(20)
+        scroll_layout.setContentsMargins(10, 10, 10, 10)
+
+        info_frame = QFrame()
+        info_frame.setObjectName("info_card")
+        info_layout = QVBoxLayout(info_frame)
+
+        info_items = [
+            ("🏢", "Dirección",
+             "7a Avenida 12-34, Zona 1\nCiudad de Guatemala, Guatemala\n\n📍 Fácil acceso con estacionamiento disponible"),
+            ("📞", "Teléfonos",
+             "Línea Principal: (502) 1234-5678\nLínea de Ventas: (502) 8765-4321\nLínea de Soporte: (502) 5555-9999"),
+            ("📧", "Email",
+             "Información General: info@libreriaabc.com\nVentas y Pedidos: ventas@libreriaabc.com\nSoporte Técnico: soporte@libreriaabc.com"),
+            ("🕒", "Horario de Atención",
+             "Lunes a Viernes: 8:00 AM - 6:00 PM\nSábados: 9:00 AM - 1:00 PM\nDomingos: Cerrado\n\n⏰ Horario extendido en temporada escolar"),
+            ("🌐", "Sitio Web y Redes",
+             "Sitio Oficial: www.libreriaabc.com\nFacebook: /LibreriaABC\nInstagram: @LibreriaABC\nWhatsApp Business: +502 1234-5678")
+        ]
+
+        for icono, titulo_texto, contenido in info_items:
+            item_layout = QHBoxLayout()
+
+            lbl_icono = QLabel(icono)
+            lbl_icono.setStyleSheet("font-size: 28px; margin-right: 20px; min-width: 50px;")
+
+            texto_layout = QVBoxLayout()
+            lbl_titulo = QLabel(titulo_texto)
+            lbl_titulo.setStyleSheet("""
+                font-size: 18px; 
+                font-weight: bold; 
+                color: #1E40AF; 
+                margin-bottom: 8px;
+            """)
+            lbl_titulo.setWordWrap(True)
+
+            lbl_contenido = QLabel(contenido)
+            lbl_contenido.setStyleSheet("""
+                font-size: 15px; 
+                color: #64748B; 
+                line-height: 1.5;
+            """)
+            lbl_contenido.setWordWrap(True)
+
+            texto_layout.addWidget(lbl_titulo)
+            texto_layout.addWidget(lbl_contenido)
+
+            item_layout.addWidget(lbl_icono)
+            item_layout.addLayout(texto_layout)
+            item_layout.addStretch()
+
+            info_layout.addLayout(item_layout)
+
+            if info_items.index((icono, titulo_texto, contenido)) < len(info_items) - 1:
+                separador = QFrame()
+                separador.setFrameShape(QFrame.Shape.HLine)
+                separador.setFrameShadow(QFrame.Shadow.Sunken)
+                separador.setStyleSheet("background-color: #E2E8F0; margin: 15px 0px;")
+                info_layout.addWidget(separador)
+
+        scroll_layout.addWidget(info_frame)
+
+        botones_layout = QHBoxLayout()
+        botones_layout.setSpacing(15)
+
+        btn_whatsapp = QPushButton("💬 Contactar por WhatsApp")
+        btn_whatsapp.setObjectName("whatsapp")
+        btn_whatsapp.setFixedHeight(55)
+        btn_whatsapp.setMinimumWidth(250)
+
+        btn_llamar = QPushButton("📞 Llamar Ahora")
+        btn_llamar.setObjectName("llamar")
+        btn_llamar.setFixedHeight(55)
+        btn_llamar.setMinimumWidth(160)
+
+        btn_email = QPushButton("📧 Enviar Email")
+        btn_email.setObjectName("email")
+        btn_email.setFixedHeight(55)
+        btn_email.setMinimumWidth(160)
+
+        btn_whatsapp.clicked.connect(self._abrir_whatsapp)
+        btn_llamar.clicked.connect(self._realizar_llamada)
+        btn_email.clicked.connect(self._enviar_email)
+
+        botones_layout.addStretch()
+        botones_layout.addWidget(btn_whatsapp)
+        botones_layout.addWidget(btn_llamar)
+        botones_layout.addWidget(btn_email)
+        botones_layout.addStretch()
+
+        scroll_layout.addLayout(botones_layout)
+
+        ubicacion_frame = QFrame()
+        ubicacion_frame.setObjectName("info_card")
+        ubicacion_layout = QVBoxLayout(ubicacion_frame)
+
+        lbl_mapa_titulo = QLabel("🗺️ Nuestra Ubicación")
+        lbl_mapa_titulo.setStyleSheet("""
+            font-size: 20px; 
+            font-weight: bold; 
+            color: #1E40AF; 
+            margin-bottom: 15px;
+        """)
+        lbl_mapa_titulo.setWordWrap(True)
+
+        info_ubicacion = QLabel(
+            "📍 <b>Centro Comercial Plaza Central</b><br><br>"
+            "7a Avenida 12-34, Zona 1<br>"
+            "Ciudad de Guatemala, Guatemala<br><br>"
+            "🚗 <b>Cómo llegar:</b><br>"
+            "• A 2 cuadras del Parque Central<br>"
+            "• Estacionamiento gratuito por 2 horas<br>"
+            "• Acceso para personas con discapacidad<br>"
+            "• Servicio de valet parking disponible<br><br>"
+            "🚌 <b>Rutas de transporte:</b><br>"
+            "• Rutas 1, 5, 7, 12 y 15<br>"
+            "• Transmetro a 1 cuadra<br>"
+            "• Taxis disponibles 24/7"
+        )
+        info_ubicacion.setStyleSheet("""
+            font-size: 14px; 
+            color: #64748B; 
+            line-height: 1.6;
+        """)
+        info_ubicacion.setWordWrap(True)
+
+        mapa_simulado = QLabel(
+            "🗺️ MAPA INTERACTIVO\n\n📍 Ubicación: Centro de la Ciudad\n🏢 Edificio: Plaza Central, Nivel 2\n🚪 Local: 205-207")
+        mapa_simulado.setStyleSheet("""
+            font-size: 16px; 
+            color: #374151; 
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F1F5F9, stop:1 #E2E8F0);
+            padding: 60px 30px;
+            border-radius: 10px;
+            border: 3px dashed #CBD5E1;
+            text-align: center;
+            font-weight: bold;
+            min-height: 180px;
+        """)
+        mapa_simulado.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        mapa_simulado.setWordWrap(True)
+
+        ubicacion_layout.addWidget(lbl_mapa_titulo)
+        ubicacion_layout.addWidget(info_ubicacion)
+        ubicacion_layout.addWidget(mapa_simulado)
+
+        scroll_layout.addWidget(ubicacion_frame)
+        scroll_layout.addStretch()
+
+        scroll_area.setWidget(scroll_widget)
+        layout.addWidget(scroll_area)
+
+        self.setLayout(layout)
+
+    def _abrir_whatsapp(self):
+        QMessageBox.information(self, "Contactar por WhatsApp",
+                                "📱 <b>Contacto por WhatsApp</b><br><br>"
+                                "Puedes contactarnos a través de:<br><br>"
+                                "• <b>WhatsApp Business:</b> +502 1234-5678<br>"
+                                "• <b>Horario de atención:</b> 8:00 AM - 6:00 PM<br>"
+                                "• <b>Tiempo de respuesta:</b> 15 minutos promedio<br><br>"
+                                "¡Estamos para servirte! 🎒✏️")
+
+    def _realizar_llamada(self):
+        QMessageBox.information(self, "Llamar",
+                                "📞 <b>Líneas Telefónicas</b><br><br>"
+                                "Puedes llamarnos a cualquiera de nuestras líneas:<br><br>"
+                                "• <b>Línea Principal:</b> (502) 1234-5678<br>"
+                                "• <b>Ventas y Pedidos:</b> (502) 8765-4321<br>"
+                                "• <b>Soporte Técnico:</b> (502) 5555-9999<br><br>"
+                                "⏰ <b>Horario de atención telefónica:</b><br>"
+                                "Lunes a Viernes: 8:00 AM - 6:00 PM<br>"
+                                "Sábados: 9:00 AM - 1:00 PM")
+
+    def _enviar_email(self):
+        QMessageBox.information(self, "Enviar Email",
+                                "📧 <b>Correos Electrónicos</b><br><br>"
+                                "Puedes enviarnos un email a:<br><br>"
+                                "• <b>Información General:</b> info@libreriaabc.com<br>"
+                                "• <b>Ventas y Pedidos:</b> ventas@libreriaabc.com<br>"
+                                "• <b>Soporte Técnico:</b> soporte@libreriaabc.com<br><br>"
+                                "⏳ <b>Tiempo de respuesta:</b> 24 horas máximo<br>"
+                                "📎 <b>Adjunta:</b> Comprobantes, imágenes, etc.")
 
 
 if __name__ == "__main__":
