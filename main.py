@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QStackedLayout, QListWidget, QListWidgetItem, QFileDialog,
     QSpinBox, QScrollArea, QTableWidget, QTableWidgetItem, QComboBox,
     QFrame, QGridLayout, QGroupBox, QFormLayout, QCheckBox, QHeaderView, QTabWidget
+    ,QSizePolicy
 )
 from PySide6.QtGui import QFont, QPixmap, QColor, QIcon
 from PySide6.QtCore import Qt, QSize
@@ -1808,8 +1809,11 @@ class VentanaLoginPadres(QWidget):
 
     def _abrir_registro_moderno(self):
         self.hide()
-        self.registro = VentanaRegistroModerno(tipo_usuario="padre", bd=self.bd)
-        self.registro.show()
+        self.registro = VentanaRegistroModerno(
+            tipo_usuario="padre",
+            bd=self.bd,
+            ventana_principal=self
+        )
 
     def _login(self):
         if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
@@ -1875,7 +1879,8 @@ class VentanaLoginPadres(QWidget):
     def _volver(self):
         self.close()
         if self.ventana_principal:
-            self.ventana_principal.mostrar_ventana_principal()
+            self.ventana_principal.show()
+            self.ventana_principal.showMaximized()
 
     def closeEvent(self, event):
         event.accept()
@@ -1890,9 +1895,9 @@ class VentanaRegistroModerno(QWidget):
         self.ventana_login = None
         self.setWindowTitle(
             f"Registro - {'Padres de Familia' if tipo_usuario == 'padre' else 'Administrador/Empleado'}")
-        self.showMaximized()
         self._aplicar_estilos()
         self._construir_ui()
+        self.showMaximized()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
@@ -1959,92 +1964,209 @@ class VentanaRegistroModerno(QWidget):
                 background-color: #1E40AF;
                 border-color: #1E40AF;
             }
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #F1F5F9;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #CBD5E1;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #94A3B8;
+            }
         """)
 
     def _construir_ui(self):
-        layout_principal = QVBoxLayout()
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        main_widget = QWidget()
+        layout_principal = QVBoxLayout(main_widget)
         layout_principal.setContentsMargins(40, 40, 40, 40)
         layout_principal.setSpacing(0)
 
         header_layout = QHBoxLayout()
+
         logo = QLabel("📚")
         logo.setStyleSheet("font-size: 40px;")
         titulo_app = QLabel("Librería ABC")
         titulo_app.setStyleSheet("font-size: 24px; font-weight: bold; color: #1E40AF; margin-left: 10px;")
 
+        header_layout.addStretch()
         header_layout.addWidget(logo)
         header_layout.addWidget(titulo_app)
         header_layout.addStretch()
+
         layout_principal.addLayout(header_layout)
+        layout_principal.addSpacing(20)
 
         titulo = QLabel("Crear Cuenta")
         titulo.setObjectName("titulo")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo.setWordWrap(True)
 
         subtitulo_text = "Para padres de familia" if self.tipo_usuario == "padre" else "Para administradores y empleados"
         subtitulo = QLabel(subtitulo_text)
         subtitulo.setObjectName("subtitulo")
         subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitulo.setWordWrap(True)
 
         layout_principal.addWidget(titulo)
         layout_principal.addWidget(subtitulo)
         layout_principal.addSpacing(20)
 
-        form_layout = QFormLayout()
-        form_layout.setSpacing(15)
-        form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form_container = QWidget()
+        form_container.setMaximumWidth(600)
+        form_container.setStyleSheet("background: transparent;")
+
+        form_layout = QVBoxLayout(form_container)
+        form_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        form_widget = QWidget()
+        form_widget_layout = QFormLayout(form_widget)
+        form_widget_layout.setSpacing(15)
+        form_widget_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form_widget_layout.setContentsMargins(20, 20, 20, 20)
 
         lbl_nombre = QLabel("Nombre completo:")
-        lbl_nombre.setStyleSheet("font-weight: bold; color: #374151;")
+        lbl_nombre.setStyleSheet("font-weight: bold; color: #374151; font-size: 14px;")
+        lbl_nombre.setWordWrap(True)
         self.txt_nombre = QLineEdit()
         self.txt_nombre.setPlaceholderText("Ingresa tu nombre completo")
-        form_layout.addRow(lbl_nombre, self.txt_nombre)
+        self.txt_nombre.setMinimumHeight(45)
+        form_widget_layout.addRow(lbl_nombre, self.txt_nombre)
 
         lbl_usuario = QLabel("Usuario:")
-        lbl_usuario.setStyleSheet("font-weight: bold; color: #374151;")
+        lbl_usuario.setStyleSheet("font-weight: bold; color: #374151; font-size: 14px;")
+        lbl_usuario.setWordWrap(True)
         self.txt_usuario = QLineEdit()
         self.txt_usuario.setPlaceholderText("Elige un nombre de usuario")
-        form_layout.addRow(lbl_usuario, self.txt_usuario)
+        self.txt_usuario.setMinimumHeight(45)
+        form_widget_layout.addRow(lbl_usuario, self.txt_usuario)
 
         lbl_correo = QLabel("Correo electrónico:")
-        lbl_correo.setStyleSheet("font-weight: bold; color: #374151;")
+        lbl_correo.setStyleSheet("font-weight: bold; color: #374151; font-size: 14px;")
+        lbl_correo.setWordWrap(True)
         self.txt_correo = QLineEdit()
         self.txt_correo.setPlaceholderText("tu@email.com")
-        form_layout.addRow(lbl_correo, self.txt_correo)
+        self.txt_correo.setMinimumHeight(45)
+        form_widget_layout.addRow(lbl_correo, self.txt_correo)
 
         lbl_telefono = QLabel("Teléfono:")
-        lbl_telefono.setStyleSheet("font-weight: bold; color: #374151;")
+        lbl_telefono.setStyleSheet("font-weight: bold; color: #374151; font-size: 14px;")
+        lbl_telefono.setWordWrap(True)
         self.txt_telefono = QLineEdit()
         self.txt_telefono.setPlaceholderText("+502 1234-5678")
-        form_layout.addRow(lbl_telefono, self.txt_telefono)
+        self.txt_telefono.setMinimumHeight(45)
+        form_widget_layout.addRow(lbl_telefono, self.txt_telefono)
 
         lbl_contrasena = QLabel("Contraseña:")
-        lbl_contrasena.setStyleSheet("font-weight: bold; color: #374151;")
+        lbl_contrasena.setStyleSheet("font-weight: bold; color: #374151; font-size: 14px;")
+        lbl_contrasena.setWordWrap(True)
         self.txt_contrasena = QLineEdit()
         self.txt_contrasena.setPlaceholderText("Mínimo 8 caracteres")
         self.txt_contrasena.setEchoMode(QLineEdit.EchoMode.Password)
-        form_layout.addRow(lbl_contrasena, self.txt_contrasena)
+        self.txt_contrasena.setMinimumHeight(45)
+        form_widget_layout.addRow(lbl_contrasena, self.txt_contrasena)
 
         lbl_confirmar = QLabel("Confirmar contraseña:")
-        lbl_confirmar.setStyleSheet("font-weight: bold; color: #374151;")
+        lbl_confirmar.setStyleSheet("font-weight: bold; color: #374151; font-size: 14px;")
+        lbl_confirmar.setWordWrap(True)
         self.txt_confirmar = QLineEdit()
         self.txt_confirmar.setPlaceholderText("Repite tu contraseña")
         self.txt_confirmar.setEchoMode(QLineEdit.EchoMode.Password)
-        form_layout.addRow(lbl_confirmar, self.txt_confirmar)
+        self.txt_confirmar.setMinimumHeight(45)
+        form_widget_layout.addRow(lbl_confirmar, self.txt_confirmar)
 
-        layout_principal.addLayout(form_layout)
+        form_layout.addWidget(form_widget)
+        layout_principal.addWidget(form_container)
         layout_principal.addSpacing(20)
 
+        terms_container = QWidget()
+        terms_container.setMaximumWidth(600)
+        terms_layout = QVBoxLayout(terms_container)
+        terms_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        terms_layout.setContentsMargins(0, 0, 0, 0)
+
         self.check_terminos = QCheckBox("Acepto los términos y condiciones y la política de privacidad")
-        layout_principal.addWidget(self.check_terminos)
+        self.check_terminos.setStyleSheet("""
+            QCheckBox {
+                font-size: 14px;
+                color: #374151;
+                margin: 10px 0px;
+                text-align: center;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: 2px solid #D1D5DB;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #1E40AF;
+                border-color: #1E40AF;
+            }
+        """)
+
+        terms_layout.addWidget(self.check_terminos, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout_principal.addWidget(terms_container)
+        layout_principal.addSpacing(20)
+
+        btn_container = QWidget()
+        btn_container.setMaximumWidth(600)
+        btn_layout = QVBoxLayout(btn_container)
+        btn_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.btn_registrar = QPushButton("Crear Cuenta")
+        self.btn_registrar.setMinimumHeight(50)
+        self.btn_registrar.setMinimumWidth(200)
+        self.btn_registrar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.btn_registrar.clicked.connect(self._registrar_usuario)
-        layout_principal.addWidget(self.btn_registrar)
 
-        layout_login = QHBoxLayout()
+        self.btn_registrar.setStyleSheet("""
+            QPushButton {
+                background-color: #1E40AF;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 15px 25px;
+                font-size: 16px;
+                font-weight: bold;
+                margin: 10px 0px;
+                min-width: 200px;
+            }
+            QPushButton:hover {
+                background-color: #1E3A8A;
+            }
+            QPushButton:disabled {
+                background-color: #9CA3AF;
+                color: #6B7280;
+            }
+        """)
+
+        btn_layout.addWidget(self.btn_registrar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout_principal.addWidget(btn_container)
+        layout_principal.addSpacing(20)
+
+        login_container = QWidget()
+        login_container.setMaximumWidth(600)
+        login_layout = QHBoxLayout(login_container)
+        login_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         lbl_tiene_cuenta = QLabel("¿Ya tienes una cuenta?")
-        lbl_tiene_cuenta.setStyleSheet("color: #64748B;")
+        lbl_tiene_cuenta.setStyleSheet("color: #64748B; font-size: 14px;")
+        lbl_tiene_cuenta.setWordWrap(True)
 
         btn_login = QPushButton("Iniciar Sesión")
         btn_login.setStyleSheet("""
@@ -2054,29 +2176,66 @@ class VentanaRegistroModerno(QWidget):
                 border: none;
                 font-weight: bold;
                 padding: 5px 10px;
+                font-size: 14px;
+                min-width: 100px;
             }
             QPushButton:hover {
                 color: #1E3A8A;
                 text-decoration: underline;
             }
         """)
+        btn_login.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         btn_login.clicked.connect(self._ir_a_login)
 
-        layout_login.addStretch()
-        layout_login.addWidget(lbl_tiene_cuenta)
-        layout_login.addWidget(btn_login)
-        layout_login.addStretch()
+        login_layout.addWidget(lbl_tiene_cuenta)
+        login_layout.addWidget(btn_login)
 
-        layout_principal.addLayout(layout_login)
+        layout_principal.addWidget(login_container)
+        layout_principal.addSpacing(30)
+
+        volver_container = QWidget()
+        volver_container.setMaximumWidth(600)
+        volver_layout = QVBoxLayout(volver_container)
+        volver_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        btn_volver = QPushButton("Volver al inicio de sesion")
+        btn_volver.setMinimumHeight(40)
+        btn_volver.setMinimumWidth(150)
+        btn_volver.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        btn_volver.clicked.connect(self._volver_al_inicio)
+
+        btn_volver.setStyleSheet("""
+            QPushButton {
+                background-color: #6B7280;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: bold;
+                min-width: 150px;
+            }
+            QPushButton:hover {
+                background-color: #4B5563;
+            }
+        """)
+
+        volver_layout.addWidget(btn_volver, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout_principal.addWidget(volver_container)
         layout_principal.addStretch()
 
-        self.setLayout(layout_principal)
+        scroll_area.setWidget(main_widget)
 
-        self.txt_contrasena.textChanged.connect(self._validar_contraseña)
-        self.txt_confirmar.textChanged.connect(self._validar_contraseña)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll_area)
+
+        self.txt_contrasena.textChanged.connect(self._validar_contrasena)
+        self.txt_confirmar.textChanged.connect(self._validar_contrasena)
         self.txt_usuario.textChanged.connect(self._validar_usuario)
 
-    def _validar_contraseña(self):
+    def _validar_contrasena(self):
         contrasena = self.txt_contrasena.text()
         confirmar = self.txt_confirmar.text()
 
@@ -2088,6 +2247,7 @@ class VentanaRegistroModerno(QWidget):
             self.txt_confirmar.setStyleSheet(self.txt_confirmar.styleSheet())
 
     def _validar_usuario(self):
+        """Valida que el usuario tenga al menos 3 caracteres"""
         usuario = self.txt_usuario.text()
         if usuario and len(usuario) < 3:
             self.txt_usuario.setProperty("error", "true")
@@ -2096,9 +2256,71 @@ class VentanaRegistroModerno(QWidget):
             self.txt_usuario.setProperty("error", "false")
             self.txt_usuario.setStyleSheet(self.txt_usuario.styleSheet())
 
+    def _aplicar_estilos_message_box(self, msg_box, *botones):
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #F8FAFC;
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+            }
+            QMessageBox QLabel {
+                color: #1E293B;
+                font-size: 14px;
+                font-weight: normal;
+            }
+        """)
+
+        for boton in botones:
+            texto = boton.text()
+            if texto == "Sí":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #EF4444;
+                        color: white;
+                        border: 2px solid #DC2626;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #DC2626; }
+                """)
+            elif texto == "No":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #6B7280;
+                        color: white;
+                        border: 2px solid #4B5563;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #4B5563; }
+                """)
+            elif texto == "OK":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #10B981;
+                        color: white;
+                        border: 2px solid #059669;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #059669; }
+                """)
+
     def _registrar_usuario(self):
         if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
-            QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Error")
+            msg_box.setText("Error de conexión a la base de datos")
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+            btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+            self._aplicar_estilos_message_box(msg_box, btn_ok)
+            msg_box.exec()
             return
 
         nombre = self.txt_nombre.text().strip()
@@ -2129,14 +2351,25 @@ class VentanaRegistroModerno(QWidget):
             errores.append("Debes aceptar los términos y condiciones")
 
         if errores:
-            QMessageBox.warning(self, "Error de validación", "\n".join(errores))
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Error de validación")
+            msg_box.setText("\n".join(errores))
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+            self._aplicar_estilos_message_box(msg_box, btn_ok)
+            msg_box.exec()
             return
 
         try:
             existente = self.bd.consultar("SELECT * FROM Usuario WHERE usuario=?", (usuario,))
             if existente:
-                QMessageBox.warning(self, "Usuario existente",
-                                    "El nombre de usuario ya está en uso. Por favor elige otro.")
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle("Usuario existente")
+                msg_box.setText("El nombre de usuario ya está en uso. Por favor elige otro.")
+                msg_box.setIcon(QMessageBox.Icon.Warning)
+                btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+                self._aplicar_estilos_message_box(msg_box, btn_ok)
+                msg_box.exec()
                 return
 
             self.bd.ejecutar(
@@ -2150,33 +2383,50 @@ class VentanaRegistroModerno(QWidget):
                     (nombre, telefono, correo, 0, 0)
                 )
 
-            QMessageBox.information(
-                self,
-                "Registro exitoso",
-                f"¡Cuenta creada exitosamente!\n\n"
-                f"Bienvenido/a {nombre}\n"
-                f"Usuario: {usuario}\n\n"
-                f"Ya puedes iniciar sesión en el sistema."
-            )
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Registro exitoso")
+            msg_box.setText(
+                f"¡Cuenta creada exitosamente!\n\nBienvenido/a {nombre}\nUsuario: {usuario}\n\nYa puedes iniciar sesión en el sistema.")
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+            self._aplicar_estilos_message_box(msg_box, btn_ok)
+            msg_box.exec()
 
             self._ir_a_login()
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo completar el registro:\n{str(e)}")
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Error")
+            msg_box.setText(f"No se pudo completar el registro:\n{str(e)}")
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+            btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+            self._aplicar_estilos_message_box(msg_box, btn_ok)
+            msg_box.exec()
+
+    def _volver_al_inicio(self):
+        self.close()
+
+        if self.tipo_usuario == "padre":
+            self.ventana_login = VentanaLoginPadres(ventana_principal=self.ventana_principal)
+        else:
+            self.ventana_login = VentanaLoginAdmin(ventana_principal=self.ventana_principal)
+
+        self.ventana_login.showMaximized()
 
     def _ir_a_login(self):
         self.close()
+
         if self.tipo_usuario == "padre":
-            self.ventana_login = VentanaLoginPadres()
+            self.ventana_login = VentanaLoginPadres(ventana_principal=self.ventana_principal)
         else:
-            self.ventana_login = VentanaLoginAdmin()
-        self.ventana_login.show()
+            self.ventana_login = VentanaLoginAdmin(ventana_principal=self.ventana_principal)
+
+        self.ventana_login.showMaximized()
 
     def closeEvent(self, event):
         if self.bd:
             self.bd.cerrar()
         event.accept()
-
 
 class VentanaPadres(QWidget):
     def __init__(self, bd, id_usuario, ventana_principal=None):
@@ -5585,13 +5835,6 @@ class VentanaContacto(QWidget):
             "Ciudad de Guatemala, Guatemala<br><br>"
             "🚗 <b>Cómo llegar:</b><br>"
             "• A 2 cuadras del Parque Central<br>"
-            "• Estacionamiento gratuito por 2 horas<br>"
-            "• Acceso para personas con discapacidad<br>"
-            "• Servicio de valet parking disponible<br><br>"
-            "🚌 <b>Rutas de transporte:</b><br>"
-            "• Rutas 1, 5, 7, 12 y 15<br>"
-            "• Transmetro a 1 cuadra<br>"
-            "• Taxis disponibles 24/7"
         )
         info_ubicacion.setStyleSheet("""
             font-size: 14px; 
@@ -5601,7 +5844,7 @@ class VentanaContacto(QWidget):
         info_ubicacion.setWordWrap(True)
 
         mapa_simulado = QLabel(
-            "🗺️ \n\n📍 Ubicación: Centro de la Ciudad\n🏢 Edificio: Plaza Central, Nivel 2\n🚪 Local: 205-207")
+            "🗺️ \n\n📍 Ubicación: Centro de la Ciudad\n🏢 Edificio: Plaza Central, Nivel 2")
         mapa_simulado.setStyleSheet("""
             font-size: 16px; 
             color: #374151; 
