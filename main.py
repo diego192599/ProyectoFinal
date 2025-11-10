@@ -3404,7 +3404,6 @@ class VentanaPadres(QWidget):
 
     def volver_al_inicio(self):
         if self.ventana_principal:
-            # Mostrar y activar la ventana principal
             self.ventana_principal.show()
             self.ventana_principal.raise_()
             self.ventana_principal.activateWindow()
