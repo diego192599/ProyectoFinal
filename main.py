@@ -264,14 +264,19 @@ class VentanaInicio(QWidget):
         self.setWindowTitle("Librería Escolar ABC")
         self.setStyleSheet("background-color: #F5F5F5;")
         self.bd = ConexionBD(DB_FILE)
-        self._construir_ui()
 
+        self.usuario_actual = None
+        self.id_usuario_actual = None
+        self.tipo_usuario = None
+
+        self._construir_ui()
         self.showMaximized()
 
         self.ventana_login = None
         self.ventana_padres = None
         self.ventana_admin = None
-        self.ventana_registro = None
+        self.ventana_promociones = None
+        self.ventana_contacto = None
 
     def _construir_ui(self):
         scroll_area = QScrollArea()
@@ -349,8 +354,14 @@ class VentanaInicio(QWidget):
             btn.clicked.connect(item_func)
             nav_layout.addWidget(btn)
 
-        btn_login = QPushButton("Iniciar Sesión")
-        btn_login.setStyleSheet("""
+        self.user_container = QWidget()
+        self.user_container.setStyleSheet("background: transparent;")
+        self.user_layout = QHBoxLayout(self.user_container)
+        self.user_layout.setContentsMargins(0, 0, 0, 0)
+        self.user_layout.setSpacing(10)
+
+        self.btn_login = QPushButton("Iniciar Sesión")
+        self.btn_login.setStyleSheet("""
             QPushButton {
                 background-color: #3B82F6;
                 color: white;
@@ -358,19 +369,79 @@ class VentanaInicio(QWidget):
                 border-radius: 8px;
                 padding: 8px 20px;
                 font-weight: bold;
-                margin-left: 10px;
             }
             QPushButton:hover {
                 background-color: #2563EB;
             }
         """)
-        btn_login.clicked.connect(self._mostrar_login)
+        self.btn_login.clicked.connect(self._mostrar_login)
+
+        self.user_widget = QWidget()
+        self.user_widget.setStyleSheet("background: transparent;")
+        user_widget_layout = QHBoxLayout(self.user_widget)
+        user_widget_layout.setContentsMargins(0, 0, 0, 0)
+        user_widget_layout.setSpacing(10)
+
+        self.lbl_usuario = QLabel()
+        self.lbl_usuario.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-weight: bold;
+                background: transparent;
+                padding: 5px 10px;
+                border-radius: 5px;
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+        """)
+
+        self.btn_perfil = QPushButton("👤 Mi Perfil")
+        self.btn_perfil.setStyleSheet("""
+            QPushButton {
+                background-color: #10B981;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #059669;
+            }
+        """)
+        self.btn_perfil.clicked.connect(self._ir_a_perfil)
+
+        self.btn_cerrar_sesion = QPushButton("🚪 Cerrar Sesión")
+        self.btn_cerrar_sesion.setStyleSheet("""
+            QPushButton {
+                background-color: #EF4444;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #DC2626;
+            }
+        """)
+        self.btn_cerrar_sesion.clicked.connect(self._cerrar_sesion)
+
+        user_widget_layout.addWidget(self.lbl_usuario)
+        user_widget_layout.addWidget(self.btn_perfil)
+        user_widget_layout.addWidget(self.btn_cerrar_sesion)
+
+        self.user_layout.addWidget(self.btn_login)
+        self.user_layout.addWidget(self.user_widget)
 
         header_layout.addLayout(logo_layout)
         header_layout.addStretch()
         header_layout.addLayout(nav_layout)
         header_layout.addStretch()
-        header_layout.addWidget(btn_login)
+        header_layout.addWidget(self.user_container)
+
+        self._actualizar_ui_sesion()
 
         return header
 
@@ -797,37 +868,77 @@ class VentanaInicio(QWidget):
         self.showMaximized()
 
     def _ir_a_productos(self):
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_listas(self):
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_promociones(self):
         self.hide()
         self.ventana_promociones = VentanaPromociones(ventana_principal=self)
-        self.ventana_promociones.show()
+        self.ventana_promociones.showMaximized()
 
     def _ir_a_contacto(self):
         self.hide()
         self.ventana_contacto = VentanaContacto(ventana_principal=self)
-        self.ventana_contacto.show()
+        self.ventana_contacto.showMaximized()
 
     def _ir_a_catalogo(self):
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_cuadernos(self):
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_lapices(self):
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_mochilas(self):
-
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_colores(self):
-
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
 
     def _ir_a_envios(self):
         QMessageBox.information(self, "Envíos y Entregas",
@@ -870,27 +981,177 @@ class VentanaInicio(QWidget):
                                 "¡Todo en un solo lugar!")
 
     def _ver_lista_grado(self, grado):
-        self._mostrar_login()
+        if self.usuario_actual:
+            if self.tipo_usuario == 'admin':
+                self.abrir_ventana_admin(self.bd)
+            else:
+                self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
+        else:
+            self._mostrar_login()
+
+    def _cerrar_sesion(self):
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Cerrar sesión")
+        msg_box.setText("¿Estás seguro de que quieres cerrar sesión?")
+        msg_box.setIcon(QMessageBox.Icon.Question)
+
+        btn_si = msg_box.addButton("Sí", QMessageBox.ButtonRole.YesRole)
+        btn_no = msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
+
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: white;
+                color: black;
+            }
+            QMessageBox QLabel {
+                color: #1E293B;
+                font-size: 14px;
+            }
+            QMessageBox QPushButton {
+                background-color: #3B82F6;
+                color: white;
+                border: 2px solid #1E40AF;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+                min-width: 80px;
+                min-height: 35px;
+                margin: 5px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #2563EB;
+                border-color: #1E3A8A;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #1E40AF;
+            }
+        """)
+
+        btn_si.setStyleSheet("""
+            QPushButton {
+                background-color: #EF4444;
+                color: white;
+                border: 2px solid #DC2626;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+                min-width: 80px;
+                min-height: 35px;
+            }
+            QPushButton:hover {
+                background-color: #DC2626;
+                border-color: #B91C1C;
+            }
+            QPushButton:pressed {
+                background-color: #B91C1C;
+            }
+        """)
+
+        msg_box.exec()
+
+        if msg_box.clickedButton() == btn_si:
+            self.usuario_actual = None
+            self.id_usuario_actual = None
+            self.tipo_usuario = None
+
+            self._actualizar_ui_sesion()
+
+            if hasattr(self, 'ventana_padres') and self.ventana_padres:
+                self.ventana_padres.close()
+                self.ventana_padres = None
+            if hasattr(self, 'ventana_admin') and self.ventana_admin:
+                self.ventana_admin.close()
+                self.ventana_admin = None
+
+            QMessageBox.information(self, "Sesión cerrada",
+                                    "Has cerrado sesión correctamente.")
+
+    def _actualizar_ui_sesion(self):
+        if self.usuario_actual:
+            self.btn_login.setVisible(False)
+            self.user_widget.setVisible(True)
+            self.lbl_usuario.setText(f"👤 {self.usuario_actual}")
+
+
+            if self.tipo_usuario == 'admin':
+                self.btn_perfil.setText("👑 Panel Admin")
+            else:
+                self.btn_perfil.setText("👤 Mi Perfil")
+
+        else:
+            self.btn_login.setVisible(True)
+            self.user_widget.setVisible(False)
+
+
+        self.user_container.update()
+        self.user_container.repaint()
+
+    def iniciar_sesion(self, id_usuario, nombre_usuario, tipo_usuario):
+        self.id_usuario_actual = id_usuario
+        self.usuario_actual = nombre_usuario
+        self.tipo_usuario = tipo_usuario
+        self._actualizar_ui_sesion()
+
+        QMessageBox.information(self, "Bienvenido",
+                                f"¡Hola {nombre_usuario}!\nHas iniciado sesión correctamente.")
+
+    def _ir_a_perfil(self):
+        if not self.usuario_actual:
+            self._mostrar_login()
+            return
+
+        if self.tipo_usuario == 'admin':
+            self.abrir_ventana_admin(self.bd)
+        else:
+            self.abrir_ventana_padres(self.bd, self.id_usuario_actual)
 
     def _mostrar_login(self):
         self.hide()
-        if self.ventana_login is None:
-            self.ventana_login = VentanaTipoUsuario(ventana_principal=self)
+        self.ventana_login = VentanaTipoUsuario(ventana_principal=self)
         self.ventana_login.showMaximized()
 
+    def _cerrar_sesion_silenciosa(self):
+        self.usuario_actual = None
+        self.id_usuario_actual = None
+        self.tipo_usuario = None
+
+        self._actualizar_ui_sesion()
+
+        if hasattr(self, 'ventana_padres') and self.ventana_padres:
+            self.ventana_padres.close()
+            self.ventana_padres = None
+        if hasattr(self, 'ventana_admin') and self.ventana_admin:
+            self.ventana_admin.close()
+            self.ventana_admin = None
+
     def mostrar_ventana_principal(self):
+        if self.ventana_login:
+            self.ventana_login.close()
+            self.ventana_login = None
+        if self.ventana_padres:
+            self.ventana_padres.close()
+            self.ventana_padres = None
+        if self.ventana_admin:
+            self.ventana_admin.close()
+            self.ventana_admin = None
+        if self.ventana_promociones:
+            self.ventana_promociones.close()
+            self.ventana_promociones = None
+        if self.ventana_contacto:
+            self.ventana_contacto.close()
+            self.ventana_contacto = None
+
         self.showMaximized()
+        self._actualizar_ui_sesion()
 
     def abrir_ventana_padres(self, bd, id_usuario):
         self.hide()
-        if self.ventana_padres is None:
-            self.ventana_padres = VentanaPadres(bd, id_usuario, ventana_principal=self)
+        self.ventana_padres = VentanaPadres(bd, id_usuario, ventana_principal=self)
         self.ventana_padres.showMaximized()
 
     def abrir_ventana_admin(self, bd):
         self.hide()
-        if self.ventana_admin is None:
-            self.ventana_admin = VentanaAdmin(bd, ventana_principal=self)
+        self.ventana_admin = VentanaAdmin(bd, ventana_principal=self)
         self.ventana_admin.showMaximized()
 
     def closeEvent(self, event):
@@ -900,8 +1161,14 @@ class VentanaInicio(QWidget):
             self.ventana_padres.close()
         if self.ventana_admin:
             self.ventana_admin.close()
+        if self.ventana_promociones:
+            self.ventana_promociones.close()
+        if self.ventana_contacto:
+            self.ventana_contacto.close()
+
         if self.bd:
             self.bd.cerrar()
+
         event.accept()
 
 class Categoria:
@@ -1138,6 +1405,7 @@ class VentanaTipoUsuario(QWidget):
 
         self.setLayout(main_layout)
 
+
     def _abrir_padres(self):
         self.hide()
         if self.padres is None:
@@ -1318,17 +1586,22 @@ class VentanaLoginAdmin(QWidget):
 
         try:
             filas = self.bd.consultar(
-                "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='admin'",
+                "SELECT id_usuario, nombre, tipo FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='admin'",
                 (usuario, contra)
             )
             if filas:
-                QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
-                self.hide()
+                id_usuario, nombre_usuario, tipo = filas[0]
+
                 if self.ventana_principal:
+                    self.ventana_principal.iniciar_sesion(id_usuario, nombre_usuario, tipo)
                     self.ventana_principal.abrir_ventana_admin(self.bd)
+                    self.close()
                 else:
+                    QMessageBox.information(self, "Bienvenido", f"¡Hola {nombre_usuario}!")
+                    self.hide()
                     self.admin_principal = VentanaAdmin(self.bd)
                     self.admin_principal.show()
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al consultar la base de datos: {str(e)}")
 
@@ -1355,6 +1628,62 @@ class VentanaLoginPadres(QWidget):
         self.showMaximized()
         self._aplicar_estilos_login()
         self._construir_ui_login()
+
+    def _aplicar_estilos_message_box(self, msg_box, *botones):
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #F8FAFC;
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+            }
+            QMessageBox QLabel {
+                color: #1E293B;
+                font-size: 14px;
+                font-weight: normal;
+            }
+        """)
+
+        for boton in botones:
+            texto = boton.text()
+            if texto == "Sí":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #EF4444;
+                        color: white;
+                        border: 2px solid #DC2626;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #DC2626; }
+                """)
+            elif texto == "No":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #6B7280;
+                        color: white;
+                        border: 2px solid #4B5563;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #4B5563; }
+                """)
+            elif texto == "OK":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #10B981;
+                        color: white;
+                        border: 2px solid #059669;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #059669; }
+                """)
 
     def _aplicar_estilos_login(self):
         self.setStyleSheet("""
@@ -1484,31 +1813,64 @@ class VentanaLoginPadres(QWidget):
 
     def _login(self):
         if not self.bd or not hasattr(self.bd, 'conexion') or not self.bd.conexion:
-            QMessageBox.critical(self, "Error", "Error de conexión a la base de datos")
-            return
+            try:
+                self.bd = ConexionBD(DB_FILE)
+            except:
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle("Error")
+                msg_box.setText("Error de conexión a la base de datos")
+                msg_box.setIcon(QMessageBox.Icon.Critical)
+                btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+                self._aplicar_estilos_message_box(msg_box, btn_ok)
+                msg_box.exec()
+                return
 
         usuario = self.txt_usuario.text().strip()
         contra = self.txt_contra.text().strip()
 
         if not usuario or not contra:
-            QMessageBox.warning(self, "Error", "Por favor ingresa usuario y contraseña")
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Error")
+            msg_box.setText("Por favor ingresa usuario y contraseña")
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+            self._aplicar_estilos_message_box(msg_box, btn_ok)
+            msg_box.exec()
             return
 
         try:
             filas = self.bd.consultar(
-                "SELECT * FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='padre'",
+                "SELECT id_usuario, nombre, tipo FROM Usuario WHERE usuario=? AND contrasena=? AND tipo='padre'",
                 (usuario, contra)
             )
             if filas:
-                QMessageBox.information(self, "Bienvenido", f"¡Hola {filas[0][1]}!")
-                self.hide()
+                id_usuario, nombre_usuario, tipo = filas[0]
+
                 if self.ventana_principal:
-                    self.ventana_principal.abrir_ventana_padres(self.bd, filas[0][0])
+                    self.ventana_principal.iniciar_sesion(id_usuario, nombre_usuario, tipo)
+                    self.ventana_principal.abrir_ventana_padres(self.bd, id_usuario)
+                    self.close()
                 else:
-                    self.padres_principal = VentanaPadres(self.bd, filas[0][0])
+                    msg_box = QMessageBox()
+                    msg_box.setWindowTitle("Bienvenido")
+                    msg_box.setText(f"¡Hola {nombre_usuario}!")
+                    msg_box.setIcon(QMessageBox.Icon.Information)
+                    btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+                    self._aplicar_estilos_message_box(msg_box, btn_ok)
+                    msg_box.exec()
+
+                    self.hide()
+                    self.padres_principal = VentanaPadres(self.bd, id_usuario)
                     self.padres_principal.show()
+
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al consultar la base de datos: {str(e)}")
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("Error")
+            msg_box.setText(f"Error al consultar la base de datos: {str(e)}")
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+            btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+            self._aplicar_estilos_message_box(msg_box, btn_ok)
+            msg_box.exec()
 
     def _volver(self):
         self.close()
@@ -1516,17 +1878,15 @@ class VentanaLoginPadres(QWidget):
             self.ventana_principal.mostrar_ventana_principal()
 
     def closeEvent(self, event):
-        """Maneja el cierre de la ventana"""
-        if self.bd:
-            self.bd.cerrar()
         event.accept()
 
 
 class VentanaRegistroModerno(QWidget):
-    def __init__(self, tipo_usuario="padre", bd=None):
+    def __init__(self, tipo_usuario="padre", bd=None, ventana_principal=None):
         super().__init__()
         self.tipo_usuario = tipo_usuario
         self.bd = bd if bd else ConexionBD(DB_FILE)
+        self.ventana_principal = ventana_principal
         self.ventana_login = None
         self.setWindowTitle(
             f"Registro - {'Padres de Familia' if tipo_usuario == 'padre' else 'Administrador/Empleado'}")
@@ -1817,6 +2177,7 @@ class VentanaRegistroModerno(QWidget):
             self.bd.cerrar()
         event.accept()
 
+
 class VentanaPadres(QWidget):
     def __init__(self, bd, id_usuario, ventana_principal=None):
         super().__init__()
@@ -1824,7 +2185,7 @@ class VentanaPadres(QWidget):
         self.id_usuario = id_usuario
         self.ventana_principal = ventana_principal
         self.setWindowTitle("Padres de Familia - Librería ABC")
-        self.resize(1200, 800)
+        self.showMaximized()
         self.lista_seleccionados = []
         self.carrito_compras = []
         self.lista_mis_utiles = None
@@ -1834,19 +2195,72 @@ class VentanaPadres(QWidget):
         main_layout = QHBoxLayout()
         self.setLayout(main_layout)
 
+        scroll_panel = QScrollArea()
+        scroll_panel.setFixedWidth(300)
+        scroll_panel.setWidgetResizable(True)
+        scroll_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_panel.setStyleSheet("""
+            QScrollArea {
+                background-color: #1E40AF;
+                border: none;
+                border-radius: 10px;
+                margin: 10px;
+            }
+            QScrollBar:vertical {
+                background-color: #1E3A8A;
+                width: 12px;
+                margin: 0px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #3B82F6;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #2563EB;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
         panel_botones = QWidget()
-        panel_botones.setFixedWidth(250)
         panel_botones.setStyleSheet("""
             QWidget {
                 background-color: #1E40AF;
                 border-radius: 10px;
-                margin: 10px;
             }
         """)
 
         layout_botones = QVBoxLayout(panel_botones)
-        layout_botones.setContentsMargins(10, 20, 10, 20)
-        layout_botones.setSpacing(10)
+        layout_botones.setContentsMargins(15, 20, 15, 20)
+        layout_botones.setSpacing(15)
+
+        header_widget = QWidget()
+        header_layout = QVBoxLayout(header_widget)
+        header_layout.setSpacing(10)
+
+        btn_volver = QPushButton("🏠 Volver al Inicio")
+        btn_volver.setStyleSheet("""
+            QPushButton {
+                background-color: #6B7280;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 15px;
+                font-size: 14px;
+                font-weight: bold;
+                min-height: 45px;
+            }
+            QPushButton:hover {
+                background-color: #4B5563;
+            }
+        """)
+        btn_volver.clicked.connect(self.volver_al_inicio)
+        header_layout.addWidget(btn_volver)
 
         usuario_info = self.bd.consultar("SELECT nombre FROM Usuario WHERE id_usuario=?", (self.id_usuario,))
         nombre_usuario = usuario_info[0][0] if usuario_info else "Usuario"
@@ -1857,41 +2271,25 @@ class VentanaPadres(QWidget):
                 color: white;
                 font-size: 16px;
                 font-weight: bold;
-                padding: 10px;
+                padding: 15px;
                 background-color: #1E3A8A;
                 border-radius: 8px;
-                margin-bottom: 10px;
+                text-align: center;
             }
         """)
-        lbl_usuario.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout_botones.addWidget(lbl_usuario)
+        lbl_usuario.setWordWrap(True)
+        header_layout.addWidget(lbl_usuario)
+
+        layout_botones.addWidget(header_widget)
 
         botones_menu = [
             ("📚 Ver Catálogo", self.mostrar_catalogo),
             ("📝 Mi Lista de Útiles", self.mostrar_listado),
             ("🛒 Carrito de Compras", self.mostrar_carrito),
             ("📋 Listas Predefinidas", self.mostrar_listas_predefinidas),
+            ("⚙️ Configuración", self.mostrar_configuracion),
             ("❌ Cerrar Sesión", self.cerrar_sesion)
         ]
-
-        header_layout = QHBoxLayout()
-        btn_volver = QPushButton("🏠 Volver al Inicio")
-        btn_volver.setStyleSheet("""
-                         QPushButton {
-                             background-color: #6B7280;
-                             color: white;
-                             border: none;
-                             border-radius: 5px;
-                             padding: 8px 15px;
-                             font-size: 12px;
-                         }
-                         QPushButton:hover {
-                             background-color: #4B5563;
-                         }
-                     """)
-        btn_volver.clicked.connect(self.volver_al_inicio)
-        header_layout.addWidget(btn_volver)
-        header_layout.addStretch()
 
         for texto, funcion in botones_menu:
             btn = QPushButton(texto)
@@ -1901,10 +2299,11 @@ class VentanaPadres(QWidget):
                     color: white;
                     border: none;
                     border-radius: 8px;
-                    padding: 12px 15px;
+                    padding: 15px;
                     font-size: 14px;
                     font-weight: bold;
                     text-align: left;
+                    min-height: 50px;
                 }
                 QPushButton:hover {
                     background-color: #2563EB;
@@ -1915,6 +2314,9 @@ class VentanaPadres(QWidget):
 
         layout_botones.addStretch()
 
+        scroll_panel.setWidget(panel_botones)
+        main_layout.addWidget(scroll_panel)
+
         self.panel_contenido = QScrollArea()
         self.panel_contenido.setWidgetResizable(True)
         self.panel_contenido.setStyleSheet("""
@@ -1922,19 +2324,17 @@ class VentanaPadres(QWidget):
                 border: none; 
                 background-color: #F8FAFC; 
             }
-            QScrollArea > QWidget > QWidget {
-                background-color: #F8FAFC;
-            }
         """)
 
         self.contenido_widget = QWidget()
         self.contenido_layout = QVBoxLayout(self.contenido_widget)
         self.contenido_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.contenido_layout.setContentsMargins(20, 20, 20, 20)
+        self.contenido_layout.setSpacing(15)
         self.panel_contenido.setWidget(self.contenido_widget)
 
         self.mostrar_bienvenida()
 
-        main_layout.addWidget(panel_botones)
         main_layout.addWidget(self.panel_contenido)
 
     def _limpiar_panel(self):
@@ -1951,67 +2351,129 @@ class VentanaPadres(QWidget):
         welcome_widget = QWidget()
         welcome_layout = QVBoxLayout(welcome_widget)
         welcome_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        welcome_layout.setSpacing(20)
 
         icono = QLabel("📚")
-        icono.setStyleSheet("font-size: 80px;")
+        icono.setStyleSheet("font-size: 100px;")
         icono.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         titulo = QLabel("¡Bienvenido a Librería ABC!")
-        titulo.setStyleSheet("font-size: 32px; font-weight: bold; color: #1E293B; margin: 20px;")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo.setStyleSheet("""
+            font-size: 36px; 
+            font-weight: bold; 
+            color: #1E293B; 
+            margin: 20px;
+            text-align: center;
+        """)
+        titulo.setWordWrap(True)
 
         subtitulo = QLabel("Selecciona una opción del menú lateral para comenzar")
-        subtitulo.setStyleSheet("font-size: 18px; color: #64748B; margin: 10px;")
-        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitulo.setStyleSheet("""
+            font-size: 18px; 
+            color: #64748B; 
+            margin: 10px;
+            text-align: center;
+        """)
+        subtitulo.setWordWrap(True)
 
+        welcome_layout.addStretch()
         welcome_layout.addWidget(icono)
         welcome_layout.addWidget(titulo)
         welcome_layout.addWidget(subtitulo)
+        welcome_layout.addStretch()
 
         self.contenido_layout.addWidget(welcome_widget)
 
     def mostrar_catalogo(self):
         self._limpiar_panel()
 
-        header = QWidget()
-        header_layout = QHBoxLayout(header)
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
 
         titulo = QLabel("📚 Catálogo de Productos")
-        titulo.setStyleSheet("font-size: 28px; font-weight: bold; color: #1E293B;")
+        titulo.setStyleSheet("""
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #1E293B;
+        """)
+
+        buscador_widget = QWidget()
+        buscador_layout = QHBoxLayout(buscador_widget)
+        buscador_layout.setContentsMargins(0, 0, 0, 0)
 
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("🔍 Buscar productos...")
         self.txt_buscar.setStyleSheet("""
             QLineEdit {
-                padding: 10px;
+                padding: 12px;
                 border: 2px solid #E2E8F0;
                 border-radius: 8px;
                 font-size: 14px;
                 min-width: 300px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border-color: #3B82F6;
             }
         """)
         self.txt_buscar.textChanged.connect(self.filtrar_catalogo)
 
+        btn_limpiar_busqueda = QPushButton("Limpiar")
+        btn_limpiar_busqueda.setStyleSheet("""
+            QPushButton {
+                background-color: #6B7280;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 15px;
+                font-size: 14px;
+                margin-left: 5px;
+            }
+            QPushButton:hover {
+                background-color: #4B5563;
+            }
+        """)
+        btn_limpiar_busqueda.clicked.connect(self.limpiar_busqueda)
+
+        buscador_layout.addWidget(self.txt_buscar)
+        buscador_layout.addWidget(btn_limpiar_busqueda)
+
         header_layout.addWidget(titulo)
         header_layout.addStretch()
-        header_layout.addWidget(self.txt_buscar)
+        header_layout.addWidget(buscador_widget)
 
-        self.contenido_layout.addWidget(header)
+        self.contenido_layout.addWidget(header_widget)
 
         self.scroll_productos = QScrollArea()
         self.scroll_productos.setWidgetResizable(True)
-        self.scroll_productos.setStyleSheet("QScrollArea { border: none; }")
+        self.scroll_productos.setStyleSheet("""
+            QScrollArea { 
+                border: none; 
+                background: transparent;
+            }
+        """)
 
         self.widget_productos = QWidget()
         self.layout_productos = QVBoxLayout(self.widget_productos)
+        self.layout_productos.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.layout_productos.setSpacing(20)
+        self.layout_productos.setContentsMargins(10, 10, 10, 10)
         self.scroll_productos.setWidget(self.widget_productos)
 
         self.contenido_layout.addWidget(self.scroll_productos)
 
         self.cargar_productos()
 
+    def limpiar_busqueda(self):
+        self.txt_buscar.clear()
+        if hasattr(self, 'productos_completos'):
+            self.actualizar_vista_productos(self.productos_completos)
+
     def cargar_productos(self):
         try:
+            if not self.bd or not hasattr(self.bd, 'conexion'):
+                raise Exception("No hay conexión a la base de datos")
+
             productos = self.bd.consultar("""
                 SELECT p.id_producto, p.nombre, c.nombre as categoria, 
                        p.precio, p.stock, p.imagen, p.tipo_imagen
@@ -2024,7 +2486,16 @@ class VentanaPadres(QWidget):
             self.actualizar_vista_productos(productos)
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudieron cargar los productos: {str(e)}")
+            try:
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle("Error")
+                msg_box.setText(f"No se pudieron cargar los productos:\n\n{str(e)}")
+                msg_box.setIcon(QMessageBox.Icon.Critical)
+                btn_ok = msg_box.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
+                self._aplicar_estilos_message_box(msg_box, btn_ok)
+                msg_box.exec()
+            except:
+                QMessageBox.critical(self, "Error", f"No se pudieron cargar los productos:\n\n{str(e)}")
 
     def actualizar_vista_productos(self, productos):
         while self.layout_productos.count():
@@ -2033,14 +2504,22 @@ class VentanaPadres(QWidget):
                 item.widget().deleteLater()
 
         if not productos:
-            lbl_vacio = QLabel("No se encontraron productos")
-            lbl_vacio.setStyleSheet("font-size: 16px; color: #64748B; text-align: center; margin: 50px;")
+            lbl_vacio = QLabel("No se encontraron productos que coincidan con la búsqueda")
+            lbl_vacio.setStyleSheet("""
+                font-size: 16px; 
+                color: #64748B; 
+                text-align: center; 
+                margin: 50px;
+                padding: 20px;
+            """)
+            lbl_vacio.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.layout_productos.addWidget(lbl_vacio)
             return
 
         grid_widget = QWidget()
         grid_layout = QGridLayout(grid_widget)
-        grid_layout.setSpacing(15)
+        grid_layout.setSpacing(20)
+        grid_layout.setContentsMargins(10, 10, 10, 10)
 
         for i, producto in enumerate(productos):
             card = self.crear_card_producto(producto)
@@ -2052,21 +2531,23 @@ class VentanaPadres(QWidget):
         id_producto, nombre, categoria, precio, stock, imagen_blob, tipo_imagen = producto
 
         card = QWidget()
-        card.setFixedSize(280, 320)
+        card.setFixedSize(280, 350)
         card.setStyleSheet("""
             QWidget {
                 background-color: white;
                 border: 2px solid #E2E8F0;
                 border-radius: 15px;
-                padding: 15px;
+                padding: 20px;
             }
             QWidget:hover {
                 border-color: #3B82F6;
+                background-color: #F8FAFF;
             }
         """)
 
         layout = QVBoxLayout(card)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         lbl_imagen = QLabel()
         lbl_imagen.setFixedSize(120, 120)
@@ -2076,48 +2557,61 @@ class VentanaPadres(QWidget):
                 border-radius: 10px;
                 qproperty-alignment: 'AlignCenter';
                 font-size: 40px;
+                border: 1px solid #E2E8F0;
             }
         """)
 
-        if imagen_blob:
-            try:
-                pixmap = ManejadorImagenes.blob_a_imagen(imagen_blob, tipo_imagen)
-                if not pixmap.isNull():
-                    pixmap = pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio,
+        try:
+            if imagen_blob:
+                pixmap = QPixmap()
+                if pixmap.loadFromData(imagen_blob):
+                    pixmap = pixmap.scaled(110, 110, Qt.AspectRatioMode.KeepAspectRatio,
                                            Qt.TransformationMode.SmoothTransformation)
                     lbl_imagen.setPixmap(pixmap)
                 else:
                     lbl_imagen.setText("📦")
-            except:
+            else:
                 lbl_imagen.setText("📦")
-        else:
+        except Exception as e:
+            print(f"DEBUG: Error cargando imagen: {e}")
             lbl_imagen.setText("📦")
 
         lbl_nombre = QLabel(nombre)
-        lbl_nombre.setStyleSheet("font-size: 16px; font-weight: bold; color: #1E293B;")
+        lbl_nombre.setStyleSheet("""
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #1E293B;
+            margin-top: 5px;
+        """)
         lbl_nombre.setWordWrap(True)
+        lbl_nombre.setMaximumHeight(40)
 
         lbl_categoria = QLabel(categoria or "Sin categoría")
         lbl_categoria.setStyleSheet("font-size: 12px; color: #64748B;")
 
         lbl_precio = QLabel(f"Q{precio:.2f}")
-        lbl_precio.setStyleSheet("font-size: 18px; font-weight: bold; color: #059669;")
+        lbl_precio.setStyleSheet("font-size: 20px; font-weight: bold; color: #059669;")
 
         lbl_stock = QLabel(f"Stock: {stock}")
         color_stock = "#EF4444" if stock == 0 else "#F59E0B" if stock < 5 else "#10B981"
         lbl_stock.setStyleSheet(f"font-size: 12px; color: {color_stock}; font-weight: bold;")
 
         btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(8)
 
-        btn_ver = QPushButton("Ver")
+        btn_ver = QPushButton("👀 Ver")
         btn_ver.setStyleSheet("""
             QPushButton {
                 background-color: #3B82F6;
                 color: white;
                 border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
+                border-radius: 6px;
+                padding: 8px 12px;
                 font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2563EB;
             }
         """)
         btn_ver.clicked.connect(lambda: self.ver_detalle_producto(producto))
@@ -2128,13 +2622,31 @@ class VentanaPadres(QWidget):
                 background-color: #10B981;
                 color: white;
                 border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
+                border-radius: 6px;
+                padding: 8px 12px;
                 font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #059669;
             }
         """)
         btn_agregar.clicked.connect(lambda: self.agregar_al_carrito(producto))
         btn_agregar.setEnabled(stock > 0)
+
+        if stock == 0:
+            btn_agregar.setToolTip("Producto sin stock")
+            btn_agregar.setStyleSheet("""
+                QPushButton {
+                    background-color: #9CA3AF;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            """)
 
         btn_layout.addWidget(btn_ver)
         btn_layout.addWidget(btn_agregar)
@@ -2147,6 +2659,23 @@ class VentanaPadres(QWidget):
         layout.addLayout(btn_layout)
 
         return card
+
+    def filtrar_catalogo(self):
+        texto = self.txt_buscar.text().lower().strip()
+
+        if not hasattr(self, 'productos_completos'):
+            return
+
+        if not texto:
+            self.actualizar_vista_productos(self.productos_completos)
+            return
+
+        productos_filtrados = [
+            p for p in self.productos_completos
+            if texto in p[1].lower() or (p[2] and texto in p[2].lower())
+        ]
+
+        self.actualizar_vista_productos(productos_filtrados)
 
     def ver_detalle_producto(self, producto):
         id_producto, nombre, categoria, precio, stock, imagen_blob, tipo_imagen = producto
@@ -2162,21 +2691,17 @@ class VentanaPadres(QWidget):
 
         QMessageBox.information(self, "Detalles del Producto", mensaje)
 
-    def filtrar_catalogo(self):
-        texto = self.txt_buscar.text().lower()
-        if hasattr(self, 'productos_completos'):
-            productos_filtrados = [
-                p for p in self.productos_completos
-                if texto in p[1].lower()
-            ]
-            self.actualizar_vista_productos(productos_filtrados)
-
     def mostrar_listado(self):
         self._limpiar_panel()
 
+        contenedor_principal = QWidget()
+        layout_principal = QVBoxLayout(contenedor_principal)
+        layout_principal.setContentsMargins(0, 0, 0, 0)
+        layout_principal.setSpacing(20)
+
         titulo = QLabel("📝 Mi Lista de Útiles Personal")
         titulo.setStyleSheet("font-size: 28px; font-weight: bold; color: #1E293B; margin-bottom: 20px;")
-        self.contenido_layout.addWidget(titulo)
+        layout_principal.addWidget(titulo)
 
         self.lista_mis_utiles = QListWidget()
         self.lista_mis_utiles.setStyleSheet("""
@@ -2197,11 +2722,15 @@ class VentanaPadres(QWidget):
                 color: white;
             }
         """)
-        self.contenido_layout.addWidget(self.lista_mis_utiles)
+        layout_principal.addWidget(self.lista_mis_utiles)
 
         self.actualizar_lista_utiles()
 
-        botones_layout = QHBoxLayout()
+        contenedor_botones = QWidget()
+        contenedor_botones.setMaximumHeight(80)
+        layout_botones = QHBoxLayout(contenedor_botones)
+        layout_botones.setContentsMargins(0, 10, 0, 10)
+        layout_botones.setSpacing(10)
 
         btn_agregar = QPushButton("➕ Agregar Útil")
         btn_agregar.setStyleSheet("""
@@ -2210,51 +2739,60 @@ class VentanaPadres(QWidget):
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 10px 15px;
                 font-weight: bold;
-                margin: 5px;
+                min-height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #059669;
             }
         """)
         btn_agregar.clicked.connect(self.agregar_util)
 
-        btn_eliminar = QPushButton("🗑️ Eliminar Seleccionado")
+        btn_eliminar = QPushButton("🗑️ Eliminar")
         btn_eliminar.setStyleSheet("""
             QPushButton {
                 background-color: #EF4444;
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 10px 15px;
                 font-weight: bold;
-                margin: 5px;
+                min-height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #DC2626;
             }
         """)
         btn_eliminar.clicked.connect(self.eliminar_util)
 
-        btn_limpiar = QPushButton("🧹 Limpiar Lista")
+        btn_limpiar = QPushButton("🧹 Limpiar")
         btn_limpiar.setStyleSheet("""
             QPushButton {
                 background-color: #F59E0B;
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 10px 15px;
                 font-weight: bold;
-                margin: 5px;
+                min-height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #D97706;
             }
         """)
         btn_limpiar.clicked.connect(self.limpiar_lista)
 
-        btn_agregar_carrito = QPushButton("🛒 Agregar Lista al Carrito")
+        btn_agregar_carrito = QPushButton("🛒 Agregar al Carrito")
         btn_agregar_carrito.setStyleSheet("""
             QPushButton {
                 background-color: #8B5CF6;
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 10px 15px;
                 font-weight: bold;
-                margin: 5px;
+                min-height: 40px;
             }
             QPushButton:hover {
                 background-color: #7C3AED;
@@ -2262,13 +2800,15 @@ class VentanaPadres(QWidget):
         """)
         btn_agregar_carrito.clicked.connect(self.agregar_lista_al_carrito)
 
-        botones_layout.addWidget(btn_agregar)
-        botones_layout.addWidget(btn_eliminar)
-        botones_layout.addWidget(btn_limpiar)
-        botones_layout.addWidget(btn_agregar_carrito)
-        botones_layout.addStretch()
+        layout_botones.addWidget(btn_agregar)
+        layout_botones.addWidget(btn_eliminar)
+        layout_botones.addWidget(btn_limpiar)
+        layout_botones.addWidget(btn_agregar_carrito)
+        layout_botones.addStretch()
 
-        self.contenido_layout.addLayout(botones_layout)
+        layout_principal.addWidget(contenedor_botones)
+
+        self.contenido_layout.addWidget(contenedor_principal)
 
     def agregar_lista_al_carrito(self):
         if not self.lista_seleccionados:
@@ -2498,7 +3038,6 @@ class VentanaPadres(QWidget):
         productos_no_encontrados = []
 
         for util in utiles:
-            # Buscar producto en la base de datos
             productos = self.bd.consultar("""
                 SELECT p.id_producto, p.nombre, c.nombre as categoria, 
                        p.precio, p.stock, p.imagen, p.tipo_imagen
@@ -2847,18 +3386,110 @@ class VentanaPadres(QWidget):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"No se pudo completar la compra: {str(e)}")
 
+    def mostrar_configuracion(self):
+        self._limpiar_panel()
+
+        titulo = QLabel("⚙️ Configuración")
+        titulo.setStyleSheet("font-size: 28px; font-weight: bold; color: #1E293B; margin-bottom: 20px;")
+        self.contenido_layout.addWidget(titulo)
+
+        info_widget = QWidget()
+        info_layout = QVBoxLayout(info_widget)
+
+        lbl_info = QLabel("Opciones de configuración del usuario")
+        lbl_info.setStyleSheet("font-size: 16px; color: #64748B;")
+        info_layout.addWidget(lbl_info)
+
+        self.contenido_layout.addWidget(info_widget)
+
     def volver_al_inicio(self):
-        self.close()
         if self.ventana_principal:
-            self.ventana_principal.mostrar_ventana_principal()
+            # Mostrar y activar la ventana principal
+            self.ventana_principal.show()
+            self.ventana_principal.raise_()
+            self.ventana_principal.activateWindow()
+
+        self.hide()
+
+    def _aplicar_estilos_message_box(self, msg_box, *botones):
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #F8FAFC;
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+            }
+            QMessageBox QLabel {
+                color: #1E293B;
+                font-size: 14px;
+                font-weight: normal;
+            }
+        """)
+
+        for boton in botones:
+            texto = boton.text()
+            if texto == "Sí":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #EF4444;
+                        color: white;
+                        border: 2px solid #DC2626;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #DC2626; }
+                """)
+            elif texto == "No":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #6B7280;
+                        color: white;
+                        border: 2px solid #4B5563;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #4B5563; }
+                """)
+            elif texto == "OK":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #10B981;
+                        color: white;
+                        border: 2px solid #059669;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #059669; }
+                """)
 
     def cerrar_sesion(self):
-        respuesta = QMessageBox.question(
-            self, "Cerrar sesión", "¿Estás seguro de que quieres cerrar sesión?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if respuesta == QMessageBox.StandardButton.Yes:
-            self.volver_al_inicio()
+        msg_box_pregunta = QMessageBox()
+        msg_box_pregunta.setWindowTitle("Cerrar sesión")
+        msg_box_pregunta.setText("¿Estás seguro de que quieres cerrar sesión?")
+        msg_box_pregunta.setIcon(QMessageBox.Icon.Question)
+        btn_si = msg_box_pregunta.addButton("Sí", QMessageBox.ButtonRole.YesRole)
+        btn_no = msg_box_pregunta.addButton("No", QMessageBox.ButtonRole.NoRole)
+        self._aplicar_estilos_message_box(msg_box_pregunta, btn_si, btn_no)
+        msg_box_pregunta.exec()
+
+        if msg_box_pregunta.clickedButton() == btn_si:
+            self.carrito_compras.clear()
+            self.lista_seleccionados.clear()
+
+            if self.ventana_principal:
+                self.ventana_principal._cerrar_sesion_silenciosa()
+
+            self.close()
+
+    def closeEvent(self, event):
+        if self.ventana_principal and not self.ventana_principal.isVisible():
+            self.ventana_principal.show()
+        event.accept()
 
 
 class VentanaAdmin(QWidget):
@@ -4802,7 +5433,7 @@ class VentanaContacto(QWidget):
         btn_volver.setObjectName("secundario")
         btn_volver.setFixedHeight(45)
         btn_volver.setMinimumWidth(120)
-        btn_volver.clicked.connect(self.close)
+        btn_volver.clicked.connect(self._volver_al_inicio)
 
         titulo = QLabel("📞 Contacto - Librería ABC")
         titulo.setObjectName("titulo")
@@ -4971,7 +5602,7 @@ class VentanaContacto(QWidget):
         info_ubicacion.setWordWrap(True)
 
         mapa_simulado = QLabel(
-            "🗺️ MAPA INTERACTIVO\n\n📍 Ubicación: Centro de la Ciudad\n🏢 Edificio: Plaza Central, Nivel 2\n🚪 Local: 205-207")
+            "🗺️ \n\n📍 Ubicación: Centro de la Ciudad\n🏢 Edificio: Plaza Central, Nivel 2\n🚪 Local: 205-207")
         mapa_simulado.setStyleSheet("""
             font-size: 16px; 
             color: #374151; 
@@ -4997,6 +5628,11 @@ class VentanaContacto(QWidget):
         layout.addWidget(scroll_area)
 
         self.setLayout(layout)
+
+    def _volver_al_inicio(self):
+        if self.ventana_principal:
+            self.ventana_principal.mostrar_ventana_principal()
+        self.close()
 
     def _abrir_whatsapp(self):
         QMessageBox.information(self, "Contactar por WhatsApp",
@@ -5028,6 +5664,10 @@ class VentanaContacto(QWidget):
                                 "⏳ <b>Tiempo de respuesta:</b> 24 horas máximo<br>"
                                 "📎 <b>Adjunta:</b> Comprobantes, imágenes, etc.")
 
+    def closeEvent(self, event):
+        if self.ventana_principal and not self.ventana_principal.isVisible():
+            self.ventana_principal.mostrar_ventana_principal()
+        event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
