@@ -1612,10 +1612,7 @@ class VentanaLoginAdmin(QWidget):
             self.ventana_principal.mostrar_ventana_principal()
 
     def closeEvent(self, event):
-        if self.bd:
-            self.bd.cerrar()
         event.accept()
-
 
 class VentanaLoginPadres(QWidget):
     def __init__(self, ventana_principal=None):
@@ -2766,28 +2763,45 @@ class VentanaPadres(QWidget):
             self.layout_productos.addWidget(lbl_vacio)
             return
 
+        scroll_content = QWidget()
+        flow_layout = QVBoxLayout(scroll_content)
+        flow_layout.setSpacing(20)
+        flow_layout.setContentsMargins(10, 10, 10, 10)
+
         grid_widget = QWidget()
         grid_layout = QGridLayout(grid_widget)
         grid_layout.setSpacing(20)
         grid_layout.setContentsMargins(10, 10, 10, 10)
 
+        row = 0
+        col = 0
+        max_cols = 3
         for i, producto in enumerate(productos):
             card = self.crear_card_producto(producto)
-            grid_layout.addWidget(card, i // 3, i % 3)
+            grid_layout.addWidget(card, row, col)
 
-        self.layout_productos.addWidget(grid_widget)
+            col += 1
+            if col >= max_cols:
+                col = 0
+                row += 1
+
+        flow_layout.addWidget(grid_widget)
+        flow_layout.addStretch()
+
+        self.layout_productos.addWidget(scroll_content)
 
     def crear_card_producto(self, producto):
         id_producto, nombre, categoria, precio, stock, imagen_blob, tipo_imagen = producto
 
         card = QWidget()
-        card.setFixedSize(280, 350)
+        card.setMinimumSize(280, 380)  # Aumenté la altura mínima
+        card.setMaximumWidth(320)
         card.setStyleSheet("""
             QWidget {
                 background-color: white;
                 border: 2px solid #E2E8F0;
                 border-radius: 15px;
-                padding: 20px;
+                padding: 15px;
             }
             QWidget:hover {
                 border-color: #3B82F6;
@@ -2796,8 +2810,12 @@ class VentanaPadres(QWidget):
         """)
 
         layout = QVBoxLayout(card)
-        layout.setSpacing(12)
+        layout.setSpacing(10)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        imagen_container = QWidget()
+        imagen_layout = QVBoxLayout(imagen_container)
+        imagen_layout.setContentsMargins(0, 0, 0, 0)
 
         lbl_imagen = QLabel()
         lbl_imagen.setFixedSize(120, 120)
@@ -2826,25 +2844,68 @@ class VentanaPadres(QWidget):
             print(f"DEBUG: Error cargando imagen: {e}")
             lbl_imagen.setText("📦")
 
+        imagen_layout.addWidget(lbl_imagen, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(imagen_container)
+
+        info_container = QWidget()
+        info_layout = QVBoxLayout(info_container)
+        info_layout.setSpacing(8)
+        info_layout.setContentsMargins(5, 5, 5, 5)
+
         lbl_nombre = QLabel(nombre)
         lbl_nombre.setStyleSheet("""
-            font-size: 16px; 
+            font-size: 14px; 
             font-weight: bold; 
             color: #1E293B;
-            margin-top: 5px;
+            margin: 0px;
+            padding: 0px;
         """)
         lbl_nombre.setWordWrap(True)
-        lbl_nombre.setMaximumHeight(40)
+        lbl_nombre.setMinimumHeight(40)
+        lbl_nombre.setMaximumHeight(60)
+        lbl_nombre.setAlignment(Qt.AlignmentFlag.AlignTop)
+        info_layout.addWidget(lbl_nombre)
 
+        # Categoría
         lbl_categoria = QLabel(categoria or "Sin categoría")
-        lbl_categoria.setStyleSheet("font-size: 12px; color: #64748B;")
+        lbl_categoria.setStyleSheet("""
+            font-size: 12px; 
+            color: #64748B;
+            margin: 0px;
+            padding: 0px;
+        """)
+        lbl_categoria.setWordWrap(True)
+        lbl_categoria.setMaximumHeight(30)
+        info_layout.addWidget(lbl_categoria)
+
+        precio_stock_layout = QHBoxLayout()
 
         lbl_precio = QLabel(f"Q{precio:.2f}")
-        lbl_precio.setStyleSheet("font-size: 20px; font-weight: bold; color: #059669;")
+        lbl_precio.setStyleSheet("""
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #059669;
+            margin: 0px;
+            padding: 0px;
+        """)
 
         lbl_stock = QLabel(f"Stock: {stock}")
         color_stock = "#EF4444" if stock == 0 else "#F59E0B" if stock < 5 else "#10B981"
-        lbl_stock.setStyleSheet(f"font-size: 12px; color: {color_stock}; font-weight: bold;")
+        lbl_stock.setStyleSheet(f"""
+            font-size: 11px; 
+            color: {color_stock}; 
+            font-weight: bold;
+            margin: 0px;
+            padding: 0px;
+        """)
+
+        precio_stock_layout.addWidget(lbl_precio)
+        precio_stock_layout.addStretch()
+        precio_stock_layout.addWidget(lbl_stock)
+        info_layout.addLayout(precio_stock_layout)
+
+        layout.addWidget(info_container)
+        layout.addStretch()
 
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(8)
@@ -2859,6 +2920,7 @@ class VentanaPadres(QWidget):
                 padding: 8px 12px;
                 font-size: 12px;
                 font-weight: bold;
+                min-width: 60px;
             }
             QPushButton:hover {
                 background-color: #2563EB;
@@ -2876,6 +2938,7 @@ class VentanaPadres(QWidget):
                 padding: 8px 12px;
                 font-size: 12px;
                 font-weight: bold;
+                min-width: 80px;
             }
             QPushButton:hover {
                 background-color: #059669;
@@ -2895,17 +2958,12 @@ class VentanaPadres(QWidget):
                     padding: 8px 12px;
                     font-size: 12px;
                     font-weight: bold;
+                    min-width: 80px;
                 }
             """)
 
         btn_layout.addWidget(btn_ver)
         btn_layout.addWidget(btn_agregar)
-
-        layout.addWidget(lbl_imagen, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl_nombre)
-        layout.addWidget(lbl_categoria)
-        layout.addWidget(lbl_precio)
-        layout.addWidget(lbl_stock)
         layout.addLayout(btn_layout)
 
         return card
@@ -3748,9 +3806,9 @@ class VentanaAdmin(QWidget):
         self.ventana_principal = ventana_principal
         self.mostrar_login = None
         self.setWindowTitle("Administrador - Librería ABC")
-        self.showMaximized()
         self._aplicar_estilos()
         self._construir_ui()
+        self.showMaximized()
 
     def _aplicar_estilos(self):
         self.setStyleSheet("""
@@ -3763,10 +3821,11 @@ class VentanaAdmin(QWidget):
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 15px;
+                padding: 12px 16px;
                 font-size: 14px;
                 font-weight: bold;
-                margin: 2px;
+                margin: 4px;
+                min-height: 20px;
             }
             QPushButton:hover {
                 background-color: #1E3A8A;
@@ -3793,15 +3852,16 @@ class VentanaAdmin(QWidget):
             QPushButton#success:hover {
                 background-color: #047857;
             }
-            QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+            QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QTextEdit {
                 background-color: white;
                 border: 2px solid #E2E8F0;
                 border-radius: 6px;
-                padding: 8px 12px;
+                padding: 10px 12px;
                 font-size: 14px;
-                margin: 2px;
+                margin: 4px;
+                min-height: 20px;
             }
-            QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+            QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QTextEdit:focus {
                 border-color: #3B82F6;
             }
             QTableWidget {
@@ -3810,9 +3870,10 @@ class VentanaAdmin(QWidget):
                 border-radius: 8px;
                 gridline-color: #E2E8F0;
                 font-size: 14px;
+                alternate-background-color: #F8FAFC;
             }
             QTableWidget::item {
-                padding: 8px;
+                padding: 12px 8px;
                 border-bottom: 1px solid #F1F5F9;
             }
             QTableWidget::item:selected {
@@ -3823,7 +3884,7 @@ class VentanaAdmin(QWidget):
                 background-color: #1E40AF;
                 color: white;
                 font-weight: bold;
-                padding: 12px 8px;
+                padding: 14px 8px;
                 border: none;
                 font-size: 13px;
             }
@@ -3835,11 +3896,12 @@ class VentanaAdmin(QWidget):
             QTabBar::tab {
                 background-color: #F1F5F9;
                 color: #64748B;
-                padding: 10px 20px;
+                padding: 12px 20px;
                 margin-right: 2px;
                 border-top-left-radius: 6px;
                 border-top-right-radius: 6px;
                 font-weight: bold;
+                min-width: 120px;
             }
             QTabBar::tab:selected {
                 background-color: #1E40AF;
@@ -3861,34 +3923,63 @@ class VentanaAdmin(QWidget):
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
-                padding: 5px 10px;
+                padding: 8px 15px;
                 background-color: #1E40AF;
                 color: white;
                 border-radius: 4px;
+            }
+            QLabel {
+                font-size: 14px;
+                margin: 4px;
             }
             QLabel#titulo {
                 font-size: 28px;
                 font-weight: bold;
                 color: #1E293B;
                 padding: 10px;
+                margin-bottom: 10px;
             }
             QLabel#subtitulo {
                 font-size: 16px;
                 color: #64748B;
                 padding: 5px;
+                margin-bottom: 5px;
+            }
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #F1F5F9;
+                width: 14px;
+                border-radius: 7px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #CBD5E1;
+                border-radius: 7px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #94A3B8;
             }
         """)
 
     def _construir_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(10)
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
 
         header_layout = QHBoxLayout()
 
         logo_layout = QHBoxLayout()
         logo_label = QLabel("📊")
-        logo_label.setStyleSheet("font-size: 24px;")
+        logo_label.setStyleSheet("font-size: 28px;")
         titulo = QLabel("Panel de Administración")
         titulo.setObjectName("titulo")
 
@@ -3911,57 +4002,92 @@ class VentanaAdmin(QWidget):
 
         main_layout.addLayout(header_layout)
 
-        h_layout = QHBoxLayout()
-        main_layout.addLayout(h_layout)
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(20)
+        main_layout.addLayout(content_layout)
+
+        nav_scroll = QScrollArea()
+        nav_scroll.setFixedWidth(320)
+        nav_scroll.setWidgetResizable(True)
+        nav_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        nav_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         nav_widget = QWidget()
-        nav_widget.setFixedWidth(280)
         nav_layout = QVBoxLayout(nav_widget)
-        nav_layout.setContentsMargins(10, 10, 10, 10)
+        nav_layout.setContentsMargins(15, 15, 15, 15)
+        nav_layout.setSpacing(10)
 
         lbl_gestion = QLabel("Gestión del Sistema")
-        lbl_gestion.setStyleSheet("font-size: 16px; font-weight: bold; color: #1E40AF; margin: 10px 0px;")
+        lbl_gestion.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; margin: 15px 0px;")
+        lbl_gestion.setWordWrap(True)
         nav_layout.addWidget(lbl_gestion)
 
         botones_gestion = [
-            ("📦 Gestión de Inventario", self._mostrar_gestion_inventario),
             ("📊 Dashboard", self._mostrar_dashboard),
+            ("📦 Gestión de Inventario", self._mostrar_gestion_inventario),
+            ("📁 Gestión de Categorías", self._mostrar_gestion_categorias),
             ("👥 Gestión de Usuarios", self._mostrar_gestion_usuarios),
+            ("👨‍💼 Gestión de Empleados", self._mostrar_gestion_empleados),
+            ("🏢 Gestión de Proveedores", self._mostrar_gestion_proveedores),
             ("💰 Ventas y Compras", self._mostrar_ventas_compras),
         ]
 
         for texto, funcion in botones_gestion:
             btn = QPushButton(texto)
-            btn.setFixedHeight(45)
+            btn.setFixedHeight(50)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             btn.clicked.connect(funcion)
             nav_layout.addWidget(btn)
 
-        nav_layout.addSpacing(20)
+        nav_layout.addSpacing(25)
 
         lbl_acciones = QLabel("Acciones Rápidas")
-        lbl_acciones.setStyleSheet("font-size: 16px; font-weight: bold; color: #1E40AF; margin: 10px 0px;")
+        lbl_acciones.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; margin: 15px 0px;")
+        lbl_acciones.setWordWrap(True)
         nav_layout.addWidget(lbl_acciones)
 
         botones_rapidos = [
             ("➕ Agregar Producto", lambda: self._cambiar_pantalla("producto")),
-            ("🆕 Agregar Productos Ejemplo", self._agregar_productos_ejemplo),
+            ("📁 Agregar Categoría", lambda: self._cambiar_pantalla("categoria")),
+            ("👨‍💼 Agregar Empleado", lambda: self._cambiar_pantalla("empleado")),
+            ("🏢 Agregar Proveedor", lambda: self._cambiar_pantalla("proveedor")),
+            ("🆕 Productos Ejemplo", self._agregar_productos_ejemplo),
             ("📋 Reporte de Stock", self._generar_reporte_stock),
         ]
 
         for texto, funcion in botones_rapidos:
             btn = QPushButton(texto)
-            btn.setFixedHeight(40)
+            btn.setFixedHeight(45)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             btn.clicked.connect(funcion)
             nav_layout.addWidget(btn)
 
         nav_layout.addStretch()
-        h_layout.addWidget(nav_widget)
+        nav_scroll.setWidget(nav_widget)
+        content_layout.addWidget(nav_scroll)
+
+        content_scroll = QScrollArea()
+        content_scroll.setWidgetResizable(True)
+        content_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        content_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
 
         self.stacked_layout = QStackedLayout()
-        h_layout.addLayout(self.stacked_layout)
+        self.content_layout.addLayout(self.stacked_layout)
+
+        content_scroll.setWidget(self.content_widget)
+        content_layout.addWidget(content_scroll)
+
+        scroll_area.setWidget(main_widget)
+
+        final_layout = QVBoxLayout(self)
+        final_layout.setContentsMargins(0, 0, 0, 0)
+        final_layout.addWidget(scroll_area)
 
         self._inicializar_pantallas()
-
         self._mostrar_dashboard()
 
     def _inicializar_pantallas(self):
@@ -3977,11 +4103,581 @@ class VentanaAdmin(QWidget):
             "inventario": self._crear_pantalla_inventario(),
             "dashboard": self._crear_pantalla_dashboard(),
             "usuarios": self._crear_pantalla_usuarios(),
+            "categorias": self._crear_pantalla_categorias(),
+            "empleados": self._crear_pantalla_empleados(),
+            "proveedores": self._crear_pantalla_proveedores(),
             "ventas_compras": self._crear_pantalla_ventas_compras(),
         }
 
         for widget in self.pantallas.values():
             self.stacked_layout.addWidget(widget)
+
+    def _crear_pantalla_categorias(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
+
+        header_layout = QHBoxLayout()
+        titulo = QLabel("📁 Gestión de Categorías")
+        titulo.setObjectName("titulo")
+        titulo.setWordWrap(True)
+        header_layout.addWidget(titulo)
+        header_layout.addStretch()
+
+        btn_actualizar = QPushButton("🔄 Actualizar")
+        btn_actualizar.clicked.connect(self._actualizar_tabla_categorias)
+        header_layout.addWidget(btn_actualizar)
+
+        layout.addLayout(header_layout)
+
+        controles_layout = QHBoxLayout()
+
+        self.buscar_categoria = QLineEdit()
+        self.buscar_categoria.setPlaceholderText("🔍 Buscar categorías...")
+        self.buscar_categoria.textChanged.connect(self._filtrar_categorias)
+        self.buscar_categoria.setMinimumHeight(40)
+
+        controles_layout.addWidget(QLabel("Buscar:"))
+        controles_layout.addWidget(self.buscar_categoria)
+        controles_layout.addStretch()
+
+        layout.addLayout(controles_layout)
+
+        tabla_scroll = QScrollArea()
+        tabla_scroll.setWidgetResizable(True)
+        tabla_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        tabla_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        tabla_widget = QWidget()
+        tabla_layout = QVBoxLayout(tabla_widget)
+
+        self.tabla_categorias = QTableWidget()
+        self.tabla_categorias.setColumnCount(3)
+        self.tabla_categorias.setHorizontalHeaderLabels([
+            "ID", "Nombre", "Acciones"
+        ])
+
+        self.tabla_categorias.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.tabla_categorias.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.tabla_categorias.verticalHeader().setVisible(False)
+        self.tabla_categorias.setAlternatingRowColors(True)
+        self.tabla_categorias.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        header = self.tabla_categorias.horizontalHeader()
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # Nombre se expande
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Acciones
+
+        tabla_layout.addWidget(self.tabla_categorias)
+        tabla_scroll.setWidget(tabla_widget)
+        layout.addWidget(tabla_scroll)
+
+        botones_layout = QHBoxLayout()
+
+        btn_agregar = QPushButton("📁 Agregar Categoría")
+        btn_agregar.clicked.connect(lambda: self._cambiar_pantalla("categoria"))
+
+        btn_editar = QPushButton("✏️ Editar Seleccionado")
+        btn_editar.clicked.connect(self._editar_categoria)
+
+        btn_eliminar = QPushButton("🗑️ Eliminar Seleccionado")
+        btn_eliminar.setObjectName("peligro")
+        btn_eliminar.clicked.connect(self._eliminar_categoria)
+
+        botones_layout.addWidget(btn_agregar)
+        botones_layout.addWidget(btn_editar)
+        botones_layout.addWidget(btn_eliminar)
+        botones_layout.addStretch()
+
+        layout.addLayout(botones_layout)
+
+        self._actualizar_tabla_categorias()
+        return widget
+
+    def _actualizar_tabla_categorias(self):
+        try:
+            query = """
+                SELECT id_categoria, nombre
+                FROM Categoria 
+                ORDER BY nombre
+            """
+            categorias = self.bd.consultar(query)
+
+            self.tabla_categorias.setRowCount(len(categorias))
+
+            for fila, categoria in enumerate(categorias):
+                id_categoria, nombre = categoria
+
+                self.tabla_categorias.setItem(fila, 0, QTableWidgetItem(str(id_categoria)))
+                self.tabla_categorias.setItem(fila, 1, QTableWidgetItem(nombre))
+
+                widget_acciones = QWidget()
+                layout_acciones = QHBoxLayout(widget_acciones)
+                layout_acciones.setContentsMargins(4, 4, 4, 4)
+
+                btn_editar = QPushButton("✏️")
+                btn_editar.setFixedSize(35, 30)
+                btn_editar.setToolTip("Editar categoría")
+                btn_editar.clicked.connect(lambda checked, id=id_categoria: self._editar_categoria_id(id))
+
+                btn_eliminar = QPushButton("🗑️")
+                btn_eliminar.setFixedSize(35, 30)
+                btn_eliminar.setObjectName("peligro")
+                btn_eliminar.setToolTip("Eliminar categoría")
+                btn_eliminar.clicked.connect(
+                    lambda checked, id=id_categoria, nom=nombre: self._eliminar_categoria_id(id, nom))
+
+                layout_acciones.addWidget(btn_editar)
+                layout_acciones.addWidget(btn_eliminar)
+                layout_acciones.addStretch()
+
+                self.tabla_categorias.setCellWidget(fila, 2, widget_acciones)  # Cambiado a columna 2
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar la lista de categorías: {str(e)}")
+
+    def _filtrar_categorias(self):
+        texto_busqueda = self.buscar_categoria.text().lower()
+
+        for fila in range(self.tabla_categorias.rowCount()):
+            mostrar_fila = False
+
+            if texto_busqueda:
+                item = self.tabla_categorias.item(fila, 1)
+                if item and texto_busqueda in item.text().lower():
+                    mostrar_fila = True
+            else:
+                mostrar_fila = True
+
+            self.tabla_categorias.setRowHidden(fila, not mostrar_fila)
+
+    def _editar_categoria(self):
+        fila_seleccionada = self.tabla_categorias.currentRow()
+        if fila_seleccionada >= 0:
+            id_categoria = int(self.tabla_categorias.item(fila_seleccionada, 0).text())
+            self._editar_categoria_id(id_categoria)
+        else:
+            QMessageBox.warning(self, "Selección requerida", "Por favor selecciona una categoría para editar.")
+
+    def _editar_categoria_id(self, id_categoria):
+        QMessageBox.information(self, "Editar Categoría",
+                                f"Funcionalidad de edición para la categoría ID: {id_categoria}\n\n"
+                                "Esta característica estará disponible en la próxima actualización.")
+
+    def _eliminar_categoria(self):
+        fila_seleccionada = self.tabla_categorias.currentRow()
+        if fila_seleccionada >= 0:
+            id_categoria = int(self.tabla_categorias.item(fila_seleccionada, 0).text())
+            nombre_categoria = self.tabla_categorias.item(fila_seleccionada, 1).text()
+            self._eliminar_categoria_id(id_categoria, nombre_categoria)
+        else:
+            QMessageBox.warning(self, "Selección requerida", "Por favor selecciona una categoría para eliminar.")
+
+    def _eliminar_categoria_id(self, id_categoria, nombre_categoria):
+        try:
+            productos = self.bd.consultar("SELECT COUNT(*) FROM Producto WHERE id_categoria = ?", (id_categoria,))
+            if productos[0][0] > 0:
+                QMessageBox.warning(self, "No se puede eliminar",
+                                    f"No se puede eliminar la categoría '{nombre_categoria}' porque tiene {productos[0][0]} productos asociados.\n\n"
+                                    "Primero debes eliminar o reasignar los productos de esta categoría.")
+                return
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo verificar los productos: {str(e)}")
+            return
+
+        respuesta = QMessageBox.question(
+            self, "Confirmar eliminación",
+            f"¿Estás seguro de que quieres eliminar la categoría:\n\n\"{nombre_categoria}\"?\n\nEsta acción no se puede deshacer.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if respuesta == QMessageBox.StandardButton.Yes:
+            try:
+                self.bd.ejecutar("DELETE FROM Categoria WHERE id_categoria = ?", (id_categoria,))
+                QMessageBox.information(self, "Éxito", "Categoría eliminada correctamente.")
+                self._actualizar_tabla_categorias()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"No se pudo eliminar la categoría: {str(e)}")
+
+    def _crear_pantalla_empleados(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
+
+        # Header
+        header_layout = QHBoxLayout()
+        titulo = QLabel("👨‍💼 Gestión de Empleados")
+        titulo.setObjectName("titulo")
+        titulo.setWordWrap(True)
+        header_layout.addWidget(titulo)
+        header_layout.addStretch()
+
+        btn_actualizar = QPushButton("🔄 Actualizar")
+        btn_actualizar.clicked.connect(self._actualizar_tabla_empleados)
+        header_layout.addWidget(btn_actualizar)
+
+        layout.addLayout(header_layout)
+
+        controles_layout = QHBoxLayout()
+
+        self.buscar_empleado = QLineEdit()
+        self.buscar_empleado.setPlaceholderText("🔍 Buscar empleados por nombre, teléfono o correo...")
+        self.buscar_empleado.textChanged.connect(self._filtrar_empleados)
+        self.buscar_empleado.setMinimumHeight(40)
+
+        controles_layout.addWidget(QLabel("Buscar:"))
+        controles_layout.addWidget(self.buscar_empleado)
+        controles_layout.addStretch()
+
+        layout.addLayout(controles_layout)
+
+        tabla_scroll = QScrollArea()
+        tabla_scroll.setWidgetResizable(True)
+        tabla_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        tabla_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        tabla_widget = QWidget()
+        tabla_layout = QVBoxLayout(tabla_widget)
+
+        self.tabla_empleados = QTableWidget()
+        self.tabla_empleados.setColumnCount(6)
+        self.tabla_empleados.setHorizontalHeaderLabels([
+            "ID", "Nombre", "Teléfono", "Correo", "Salario", "Acciones"
+        ])
+
+        self.tabla_empleados.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.tabla_empleados.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.tabla_empleados.verticalHeader().setVisible(False)
+        self.tabla_empleados.setAlternatingRowColors(True)
+        self.tabla_empleados.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        header = self.tabla_empleados.horizontalHeader()
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+
+        tabla_layout.addWidget(self.tabla_empleados)
+        tabla_scroll.setWidget(tabla_widget)
+        layout.addWidget(tabla_scroll)
+
+        botones_layout = QHBoxLayout()
+
+        btn_agregar = QPushButton("👨‍💼 Agregar Empleado")
+        btn_agregar.clicked.connect(lambda: self._cambiar_pantalla("empleado"))
+
+        btn_editar = QPushButton("✏️ Editar Seleccionado")
+        btn_editar.clicked.connect(self._editar_empleado)
+
+        btn_eliminar = QPushButton("🗑️ Eliminar Seleccionado")
+        btn_eliminar.setObjectName("peligro")
+        btn_eliminar.clicked.connect(self._eliminar_empleado)
+
+        botones_layout.addWidget(btn_agregar)
+        botones_layout.addWidget(btn_editar)
+        botones_layout.addWidget(btn_eliminar)
+        botones_layout.addStretch()
+
+        layout.addLayout(botones_layout)
+
+        self._actualizar_tabla_empleados()
+        return widget
+
+    def _actualizar_tabla_empleados(self):
+        try:
+            query = """
+                SELECT id_empleado, nombre, telefono, correo, salario
+                FROM Empleado 
+                ORDER BY nombre
+            """
+            empleados = self.bd.consultar(query)
+
+            self.tabla_empleados.setRowCount(len(empleados))
+
+            for fila, empleado in enumerate(empleados):
+                id_empleado, nombre, telefono, correo, salario = empleado
+
+                self.tabla_empleados.setItem(fila, 0, QTableWidgetItem(str(id_empleado)))
+                self.tabla_empleados.setItem(fila, 1, QTableWidgetItem(nombre or "Sin nombre"))
+                self.tabla_empleados.setItem(fila, 2, QTableWidgetItem(telefono or "Sin teléfono"))
+                self.tabla_empleados.setItem(fila, 3, QTableWidgetItem(correo or "Sin correo"))
+                self.tabla_empleados.setItem(fila, 4, QTableWidgetItem(f"Q{salario:.2f}" if salario else "Q0.00"))
+
+                widget_acciones = QWidget()
+                layout_acciones = QHBoxLayout(widget_acciones)
+                layout_acciones.setContentsMargins(4, 4, 4, 4)
+
+                btn_editar = QPushButton("✏️")
+                btn_editar.setFixedSize(35, 30)
+                btn_editar.setToolTip("Editar empleado")
+                btn_editar.clicked.connect(lambda checked, id=id_empleado: self._editar_empleado_id(id))
+
+                btn_eliminar = QPushButton("🗑️")
+                btn_eliminar.setFixedSize(35, 30)
+                btn_eliminar.setObjectName("peligro")
+                btn_eliminar.setToolTip("Eliminar empleado")
+                btn_eliminar.clicked.connect(
+                    lambda checked, id=id_empleado, nom=nombre: self._eliminar_empleado_id(id, nom))
+
+                layout_acciones.addWidget(btn_editar)
+                layout_acciones.addWidget(btn_eliminar)
+                layout_acciones.addStretch()
+
+                self.tabla_empleados.setCellWidget(fila, 5, widget_acciones)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar la lista de empleados: {str(e)}")
+
+    def _filtrar_empleados(self):
+        texto_busqueda = self.buscar_empleado.text().lower()
+
+        for fila in range(self.tabla_empleados.rowCount()):
+            mostrar_fila = False
+
+            if texto_busqueda:
+                for col in [1, 2, 3]:  # Nombre, Teléfono, Correo
+                    item = self.tabla_empleados.item(fila, col)
+                    if item and texto_busqueda in item.text().lower():
+                        mostrar_fila = True
+                        break
+            else:
+                mostrar_fila = True
+
+            self.tabla_empleados.setRowHidden(fila, not mostrar_fila)
+
+    def _editar_empleado(self):
+        fila_seleccionada = self.tabla_empleados.currentRow()
+        if fila_seleccionada >= 0:
+            id_empleado = int(self.tabla_empleados.item(fila_seleccionada, 0).text())
+            self._editar_empleado_id(id_empleado)
+        else:
+            QMessageBox.warning(self, "Selección requerida", "Por favor selecciona un empleado para editar.")
+
+    def _editar_empleado_id(self, id_empleado):
+        QMessageBox.information(self, "Editar Empleado",
+                                f"Funcionalidad de edición para el empleado ID: {id_empleado}\n\n"
+                                "Esta característica estará disponible en la próxima actualización.")
+
+    def _eliminar_empleado(self):
+        fila_seleccionada = self.tabla_empleados.currentRow()
+        if fila_seleccionada >= 0:
+            id_empleado = int(self.tabla_empleados.item(fila_seleccionada, 0).text())
+            nombre_empleado = self.tabla_empleados.item(fila_seleccionada, 1).text()
+            self._eliminar_empleado_id(id_empleado, nombre_empleado)
+        else:
+            QMessageBox.warning(self, "Selección requerida", "Por favor selecciona un empleado para eliminar.")
+
+    def _eliminar_empleado_id(self, id_empleado, nombre_empleado):
+        respuesta = QMessageBox.question(
+            self, "Confirmar eliminación",
+            f"¿Estás seguro de que quieres eliminar al empleado:\n\n\"{nombre_empleado}\"?\n\nEsta acción no se puede deshacer.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if respuesta == QMessageBox.StandardButton.Yes:
+            try:
+                self.bd.ejecutar("DELETE FROM Empleado WHERE id_empleado = ?", (id_empleado,))
+                QMessageBox.information(self, "Éxito", "Empleado eliminado correctamente.")
+                self._actualizar_tabla_empleados()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"No se pudo eliminar el empleado: {str(e)}")
+
+    def _crear_pantalla_proveedores(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
+
+        header_layout = QHBoxLayout()
+        titulo = QLabel("🏢 Gestión de Proveedores")
+        titulo.setObjectName("titulo")
+        titulo.setWordWrap(True)
+        header_layout.addWidget(titulo)
+        header_layout.addStretch()
+
+        btn_actualizar = QPushButton("🔄 Actualizar")
+        btn_actualizar.clicked.connect(self._actualizar_tabla_proveedores)
+        header_layout.addWidget(btn_actualizar)
+
+        layout.addLayout(header_layout)
+
+        controles_layout = QHBoxLayout()
+
+        self.buscar_proveedor = QLineEdit()
+        self.buscar_proveedor.setPlaceholderText("🔍 Buscar proveedores por nombre, empresa o teléfono...")
+        self.buscar_proveedor.textChanged.connect(self._filtrar_proveedores)
+        self.buscar_proveedor.setMinimumHeight(40)
+
+        controles_layout.addWidget(QLabel("Buscar:"))
+        controles_layout.addWidget(self.buscar_proveedor)
+        controles_layout.addStretch()
+
+        layout.addLayout(controles_layout)
+
+        tabla_scroll = QScrollArea()
+        tabla_scroll.setWidgetResizable(True)
+        tabla_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        tabla_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        tabla_widget = QWidget()
+        tabla_layout = QVBoxLayout(tabla_widget)
+
+        self.tabla_proveedores = QTableWidget()
+        self.tabla_proveedores.setColumnCount(5)
+        self.tabla_proveedores.setHorizontalHeaderLabels([
+            "ID", "Nombre", "Empresa", "Teléfono", "Acciones"
+        ])
+
+        self.tabla_proveedores.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.tabla_proveedores.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.tabla_proveedores.verticalHeader().setVisible(False)
+        self.tabla_proveedores.setAlternatingRowColors(True)
+        self.tabla_proveedores.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        header = self.tabla_proveedores.horizontalHeader()
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+
+        tabla_layout.addWidget(self.tabla_proveedores)
+        tabla_scroll.setWidget(tabla_widget)
+        layout.addWidget(tabla_scroll)
+
+        botones_layout = QHBoxLayout()
+
+        btn_agregar = QPushButton("🏢 Agregar Proveedor")
+        btn_agregar.clicked.connect(lambda: self._cambiar_pantalla("proveedor"))
+
+        btn_editar = QPushButton("✏️ Editar Seleccionado")
+        btn_editar.clicked.connect(self._editar_proveedor)
+
+        btn_eliminar = QPushButton("🗑️ Eliminar Seleccionado")
+        btn_eliminar.setObjectName("peligro")
+        btn_eliminar.clicked.connect(self._eliminar_proveedor)
+
+        botones_layout.addWidget(btn_agregar)
+        botones_layout.addWidget(btn_editar)
+        botones_layout.addWidget(btn_eliminar)
+        botones_layout.addStretch()
+
+        layout.addLayout(botones_layout)
+
+        self._actualizar_tabla_proveedores()
+        return widget
+
+    def _actualizar_tabla_proveedores(self):
+        try:
+            query = """
+                SELECT id_proveedor, nombre, empresa, telefono
+                FROM Proveedor 
+                ORDER BY nombre
+            """
+            proveedores = self.bd.consultar(query)
+
+            self.tabla_proveedores.setRowCount(len(proveedores))
+
+            for fila, proveedor in enumerate(proveedores):
+                id_proveedor, nombre, empresa, telefono = proveedor
+
+                self.tabla_proveedores.setItem(fila, 0, QTableWidgetItem(str(id_proveedor)))
+                self.tabla_proveedores.setItem(fila, 1, QTableWidgetItem(nombre or "Sin nombre"))
+                self.tabla_proveedores.setItem(fila, 2, QTableWidgetItem(empresa or "Sin empresa"))
+                self.tabla_proveedores.setItem(fila, 3, QTableWidgetItem(telefono or "Sin teléfono"))
+
+                widget_acciones = QWidget()
+                layout_acciones = QHBoxLayout(widget_acciones)
+                layout_acciones.setContentsMargins(4, 4, 4, 4)
+
+                btn_editar = QPushButton("✏️")
+                btn_editar.setFixedSize(35, 30)
+                btn_editar.setToolTip("Editar proveedor")
+                btn_editar.clicked.connect(lambda checked, id=id_proveedor: self._editar_proveedor_id(id))
+
+                btn_eliminar = QPushButton("🗑️")
+                btn_eliminar.setFixedSize(35, 30)
+                btn_eliminar.setObjectName("peligro")
+                btn_eliminar.setToolTip("Eliminar proveedor")
+                btn_eliminar.clicked.connect(
+                    lambda checked, id=id_proveedor, nom=nombre: self._eliminar_proveedor_id(id, nom))
+
+                layout_acciones.addWidget(btn_editar)
+                layout_acciones.addWidget(btn_eliminar)
+                layout_acciones.addStretch()
+
+                self.tabla_proveedores.setCellWidget(fila, 4, widget_acciones)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar la lista de proveedores: {str(e)}")
+
+    def _filtrar_proveedores(self):
+        texto_busqueda = self.buscar_proveedor.text().lower()
+
+        for fila in range(self.tabla_proveedores.rowCount()):
+            mostrar_fila = False
+
+            if texto_busqueda:
+                for col in [1, 2, 3]:  # Nombre, Empresa, Teléfono
+                    item = self.tabla_proveedores.item(fila, col)
+                    if item and texto_busqueda in item.text().lower():
+                        mostrar_fila = True
+                        break
+            else:
+                mostrar_fila = True
+
+            self.tabla_proveedores.setRowHidden(fila, not mostrar_fila)
+
+    def _editar_proveedor(self):
+        fila_seleccionada = self.tabla_proveedores.currentRow()
+        if fila_seleccionada >= 0:
+            id_proveedor = int(self.tabla_proveedores.item(fila_seleccionada, 0).text())
+            self._editar_proveedor_id(id_proveedor)
+        else:
+            QMessageBox.warning(self, "Selección requerida", "Por favor selecciona un proveedor para editar.")
+
+    def _editar_proveedor_id(self, id_proveedor):
+        QMessageBox.information(self, "Editar Proveedor",
+                                f"Funcionalidad de edición para el proveedor ID: {id_proveedor}\n\n"
+                                "Esta característica estará disponible en la próxima actualización.")
+
+    def _eliminar_proveedor(self):
+        fila_seleccionada = self.tabla_proveedores.currentRow()
+        if fila_seleccionada >= 0:
+            id_proveedor = int(self.tabla_proveedores.item(fila_seleccionada, 0).text())
+            nombre_proveedor = self.tabla_proveedores.item(fila_seleccionada, 1).text()
+            self._eliminar_proveedor_id(id_proveedor, nombre_proveedor)
+        else:
+            QMessageBox.warning(self, "Selección requerida", "Por favor selecciona un proveedor para eliminar.")
+
+    def _eliminar_proveedor_id(self, id_proveedor, nombre_proveedor):
+        respuesta = QMessageBox.question(
+            self, "Confirmar eliminación",
+            f"¿Estás seguro de que quieres eliminar al proveedor:\n\n\"{nombre_proveedor}\"?\n\nEsta acción no se puede deshacer.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if respuesta == QMessageBox.StandardButton.Yes:
+            try:
+                self.bd.ejecutar("DELETE FROM Proveedor WHERE id_proveedor = ?", (id_proveedor,))
+                QMessageBox.information(self, "Éxito", "Proveedor eliminado correctamente.")
+                self._actualizar_tabla_proveedores()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"No se pudo eliminar el proveedor: {str(e)}")
+
+    def _exportar_empleados(self):
+        QMessageBox.information(self, "Exportar Empleados", "Funcionalidad de exportación en desarrollo.")
+
+    def _exportar_proveedores(self):
+        QMessageBox.information(self, "Exportar Proveedores", "Funcionalidad de exportación en desarrollo.")
+
+    def _mostrar_gestion_categorias(self):
+        self._cambiar_pantalla("categorias")
+
+    def _mostrar_gestion_empleados(self):
+        self._cambiar_pantalla("empleados")
+
+    def _mostrar_gestion_proveedores(self):
+        self._cambiar_pantalla("proveedores")
 
     def _crear_pantalla_inventario(self):
         widget = QWidget()
@@ -4383,12 +5079,93 @@ class VentanaAdmin(QWidget):
         QMessageBox.information(self, "Reporte de Stock", "Generando reporte de stock...")
 
     def volver_al_inicio(self):
-        self.close()
         if self.ventana_principal:
-            self.ventana_principal.mostrar_ventana_principal()
+            self.ventana_principal.show()
+            self.ventana_principal.raise_()
+            self.ventana_principal.activateWindow()
+        self.hide()
+
+    def _aplicar_estilos_message_box(self, msg_box, *botones):
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #F8FAFC;
+                border: 2px solid #E2E8F0;
+                border-radius: 10px;
+            }
+            QMessageBox QLabel {
+                color: #1E293B;
+                font-size: 14px;
+                font-weight: normal;
+            }
+        """)
+
+        for boton in botones:
+            texto = boton.text()
+            if texto == "Sí":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #EF4444;
+                        color: white;
+                        border: 2px solid #DC2626;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #DC2626; }
+                """)
+            elif texto == "No":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #6B7280;
+                        color: white;
+                        border: 2px solid #4B5563;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #4B5563; }
+                """)
+            elif texto == "OK":
+                boton.setStyleSheet("""
+                    QPushButton {
+                        background-color: #10B981;
+                        color: white;
+                        border: 2px solid #059669;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                        min-width: 80px;
+                    }
+                    QPushButton:hover { background-color: #059669; }
+                """)
 
     def _abrir_login(self):
-        self.volver_al_inicio()
+        msg_box_pregunta = QMessageBox()
+        msg_box_pregunta.setWindowTitle("Cerrar sesión")
+        msg_box_pregunta.setText("¿Estás seguro de que quieres cerrar sesión?")
+        msg_box_pregunta.setIcon(QMessageBox.Icon.Question)
+        btn_si = msg_box_pregunta.addButton("Sí", QMessageBox.ButtonRole.YesRole)
+        btn_no = msg_box_pregunta.addButton("No", QMessageBox.ButtonRole.NoRole)
+        self._aplicar_estilos_message_box(msg_box_pregunta, btn_si, btn_no)
+        msg_box_pregunta.exec()
+
+        if msg_box_pregunta.clickedButton() == btn_si:
+            if hasattr(self, 'carrito_compras'):
+                self.carrito_compras.clear()
+            if hasattr(self, 'lista_seleccionados'):
+                self.lista_seleccionados.clear()
+
+            if self.ventana_principal:
+                self.ventana_principal._cerrar_sesion_silenciosa()
+
+            self.close()
+
+    def closeEvent(self, event):
+        if self.ventana_principal and not self.ventana_principal.isVisible():
+            self.ventana_principal.show()
+        event.accept()
 
 class PantallaAgregarCategoria(QWidget):
     def __init__(self, bd):
